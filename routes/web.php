@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -14,9 +15,11 @@ Route::get('dashboard', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('rooms', RoomController::class)
-        ->only(['index', 'store', 'update', 'destroy']);
+        ->only(['index', 'store', 'update', 'destroy', 'show']);
 
-    Route::get('rooms/{room}/layout', [RoomController::class, 'showLayout'])->name('rooms.layout');
+    // Lưu thông tin máy tính (nếu cần)
+    Route::post('/rooms/{room}/computers', [RoomComputerController::class, 'store'])
+        ->name('computers.store');
 });
 
 require __DIR__.'/settings.php';

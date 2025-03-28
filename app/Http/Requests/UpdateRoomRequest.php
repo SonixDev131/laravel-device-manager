@@ -11,7 +11,7 @@ class UpdateRoomRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class UpdateRoomRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|required|string|max:50|unique:\App\Models\Room,name,'.$this->route('room')->id,
+            'grid_rows' => 'sometimes|required|integer|min:1',
+            'grid_cols' => 'sometimes|required|integer|min:1',
         ];
     }
 }

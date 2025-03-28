@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateRoomAction;
 use App\Actions\DeleteRoomAction;
+use App\Actions\UpdateRoomAction;
 use App\Http\Requests\DeleteRoomRequest;
 use App\Http\Requests\StoreRoomRequest;
 use App\Http\Requests\UpdateRoomRequest;
 use App\Http\Resources\RoomResource;
 use App\Models\Room;
+use Illuminate\Contracts\Cache\Store;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +23,7 @@ class RoomController extends Controller
     public function index(): Response
     {
         return Inertia::render(
-            'rooms/RoomsIndex',
+            'rooms/RoomIndex',
             [
                 'rooms' => RoomResource::collection(Room::all()),
             ]);
@@ -29,17 +32,21 @@ class RoomController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreRoomRequest $request)
+    public function store(StoreRoomRequest $request, CreateRoomAction $action): RedirectResponse
     {
-        //
+        $action->handle($request->validated());
+
+        return to_route('rooms.index');
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateRoomRequest $request, Room $room)
+    public function update(UpdateRoomRequest $request, Room $room, UpdateRoomAction $action): RedirectResponse
     {
-        //
+        $action->handle($room, $request->validated());
+
+        return redirect()->back();
     }
 
     /**
@@ -56,10 +63,14 @@ class RoomController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the layout of the specified room.
      */
-    public function showLayout(Room $room)
+    public function show(Room $room): Response
     {
-        //
+        $room->load('computers');
+
+        return Inertia::render('rooms/RoomLayout', [
+            'room' => RoomResource::make($room),
+        ]);
     }
 }

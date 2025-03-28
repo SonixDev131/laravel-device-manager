@@ -40,8 +40,20 @@ export interface Room {
     name: string;
     grid_rows: number;
     grid_cols: number;
+    computers: Computer[];
     created_at: string;
     updated_at: string;
+}
+
+export interface Computer {
+    id: string;
+    name: string;
+    mac_address: string;
+    pos_row: number;
+    pos_col: number;
+    created_at: string;
+    updated_at: string;
+    room_id: string;
 }
 
 export interface RoomFormData {

@@ -4,10 +4,12 @@ namespace App\Actions;
 
 use App\Models\Room;
 
-final class UpdateRoomAction
+class CreateComputerAction
 {
     public function handle(Room $room, array $data): void
     {
-        $room->update($data);
+
+        $room->computers()->create($data);
+
     }
 }

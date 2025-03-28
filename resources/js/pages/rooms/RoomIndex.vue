@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RoomCard from '@/components/rooms/RoomCard.vue';
+import RoomDialog from '@/components/rooms/RoomDialog.vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +12,6 @@ import { useDebounceFn } from '@vueuse/core';
 import { AlertCircle, FolderOpen, Loader2, PlusCircle, Search } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
-import RoomCard from './components/RoomCard.vue';
-import RoomDialog from './components/RoomDialog.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -51,7 +51,7 @@ const debouncedSearch = useDebounceFn(() => {
 
 // Navigation helper
 const viewRoomDetails = (id: string) => {
-    router.get(route('rooms.layout', id));
+    router.get(route('rooms.show', id));
 };
 
 // Dialog handlers
@@ -64,29 +64,6 @@ const handleDeleteRoom = (room: Room) => {
 };
 
 // Handle dialog submission
-const handleDialogSubmit = (formData) => {
-    if (isEditMode.value) {
-        // Send update request
-        router.put(route('rooms.update', formData.id), formData, {
-            onStart: () => (roomStore.isLoading = true),
-            onFinish: () => {
-                closeEditDialog();
-                roomStore.isLoading = false;
-            },
-            preserveScroll: true,
-        });
-    } else {
-        // Send create request
-        router.post(route('rooms.store'), formData, {
-            onStart: () => (roomStore.isLoading = true),
-            onFinish: () => {
-                closeCreateDialog();
-                roomStore.isLoading = false;
-            },
-            preserveScroll: true,
-        });
-    }
-};
 
 // Handle dialog closure
 const handleDialogClose = () => {
@@ -186,7 +163,6 @@ const filteredRooms = computed(() => {
             :is-edit="isEditMode"
             :room="currentRoom"
             v-model:is-open="dialogOpen"
-            @submit="handleDialogSubmit"
         />
     </AppLayout>
 </template>

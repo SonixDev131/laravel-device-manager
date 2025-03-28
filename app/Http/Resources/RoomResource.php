@@ -15,11 +15,11 @@ class RoomResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource->id,
-            'name' => $this->resource->name,
-            'grid_rows' => $this->resource->grid_rows,
-            'grid_cols' => $this->resource->grid_cols,
-            'machines' => ComputerResource::collection($this->whenLoaded('computers')),
+            'id' => $this->id,
+            'name' => $this->name,
+            'grid_rows' => $this->grid_rows,
+            'grid_cols' => $this->grid_cols,
+            'computers' => ComputerResource::collection($this->whenLoaded('computers')),
         ];
     }
 }
