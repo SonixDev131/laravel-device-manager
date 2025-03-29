@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/vue3';
 import { Loader2 } from 'lucide-vue-next';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 
 interface Position {
     row: number;
@@ -20,7 +20,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
 const isOpen = defineModel('isOpen', { default: false });
 
 const emit = defineEmits<{
@@ -28,13 +27,17 @@ const emit = defineEmits<{
     close: [];
 }>();
 
+// Tự động đề xuất tên dựa trên vị trí
+const suggestedName = computed(() => {
+    return `PC-R${props.position.row}-C${props.position.col}`;
+});
+
 // Initialize form with proper typing
 const form = useForm({
     name: '',
     ip_address: '',
     mac_address: '',
-    status: 'available',
-    type: 'desktop',
+    status: 'operational',
     room_id: props.roomId,
     pos_row: props.position.row,
     pos_col: props.position.col,
@@ -45,8 +48,7 @@ const resetForm = () => {
     form.name = '';
     form.ip_address = '';
     form.mac_address = '';
-    form.status = 'available';
-    form.type = 'desktop';
+    form.status = 'operational';
     form.room_id = props.roomId;
     form.pos_row = props.position.row;
     form.pos_col = props.position.col;
@@ -85,6 +87,11 @@ watch(
 );
 
 const onSubmit = () => {
+    // Nếu tên trống, sử dụng tên đề xuất
+    if (!form.name) {
+        form.name = suggestedName.value;
+    }
+
     form.post(route('computers.store', props.roomId), {
         onSuccess: () => {
             isOpen.value = false;
@@ -97,7 +104,7 @@ const onSubmit = () => {
 
 <template>
     <Dialog :open="isOpen">
-        <DialogContent class="sm:max-w-[425px]">
+        <DialogContent class="sm:max-w-[500px]">
             <DialogHeader>
                 <DialogTitle>Add New Computer</DialogTitle>
                 <DialogDescription> Enter computer details for position ({{ position.row }}, {{ position.col }}) </DialogDescription>
@@ -105,60 +112,43 @@ const onSubmit = () => {
 
             <form :id="formId" @submit.prevent="onSubmit" class="flex flex-col gap-6">
                 <div class="grid gap-6">
-                    <!-- Computer Name Field -->
+                    <!-- MAC Address Field - Bắt buộc -->
                     <div class="grid gap-2">
-                        <Label for="name">Computer Name</Label>
-                        <Input id="name" type="text" placeholder="Enter computer name..." v-model="form.name" :disabled="form.processing" required />
-                        <InputError :message="form.errors.name" />
-                    </div>
-
-                    <!-- IP Address Field
-                    <div class="grid gap-2">
-                        <Label for="ip_address">IP Address</Label>
-                        <Input id="ip_address" type="text" placeholder="192.168.1.1" v-model="form.ip_address" :disabled="form.processing" />
-                        <InputError :message="form.errors.ip_address" />
-                    </div> -->
-
-                    <!-- MAC Address Field -->
-                    <div class="grid gap-2">
-                        <Label for="mac_address">MAC Address</Label>
-                        <Input id="mac_address" type="text" placeholder="00:00:00:00:00:00" v-model="form.mac_address" :disabled="form.processing" />
+                        <Label for="mac_address" class="flex items-center">
+                            <span>MAC Address</span>
+                            <span class="ml-1 text-xs text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="mac_address"
+                            type="text"
+                            placeholder="00:00:00:00:00:00"
+                            v-model="form.mac_address"
+                            :disabled="form.processing"
+                            required
+                        />
                         <InputError :message="form.errors.mac_address" />
                     </div>
 
-                    <!-- <div class="grid grid-cols-2 gap-4"> -->
-                    <!-- Type Field -->
-                    <!-- <div class="grid gap-2">
-                            <Label for="type">Type</Label>
-                            <Select v-model="form.type" :disabled="form.processing">
-                                <SelectTrigger class="w-full">
-                                    <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="desktop">Desktop</SelectItem>
-                                    <SelectItem value="laptop">Laptop</SelectItem>
-                                    <SelectItem value="server">Server</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <InputError :message="form.errors.type" />
-                        </div> -->
+                    <!-- Computer Name - Tự động đề xuất -->
+                    <div class="grid gap-2">
+                        <Label for="name" class="flex items-center">
+                            <span>Computer Name</span>
+                            <span class="ml-1 text-xs text-muted-foreground">(Optional)</span>
+                        </Label>
+                        <Input id="name" type="text" :placeholder="suggestedName" v-model="form.name" :disabled="form.processing" />
+                        <div class="text-xs text-muted-foreground">Leave empty to use "{{ suggestedName }}"</div>
+                        <InputError :message="form.errors.name" />
+                    </div>
 
-                    <!-- Status Field
-                        <div class="grid gap-2">
-                            <Label for="status">Status</Label>
-                            <Select v-model="form.status" :disabled="form.processing">
-                                <SelectTrigger class="w-full">
-                                    <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="available">Available</SelectItem>
-                                    <SelectItem value="in_use">In Use</SelectItem>
-                                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <InputError :message="form.errors.status" />
-                        </div> -->
-                    <!-- </div> -->
+                    <!-- IP Address Field - Tùy chọn -->
+                    <div class="grid gap-2">
+                        <Label for="ip_address" class="flex items-center">
+                            <span>IP Address</span>
+                            <span class="ml-1 text-xs text-muted-foreground">(Optional)</span>
+                        </Label>
+                        <Input id="ip_address" type="text" placeholder="192.168.1.1" v-model="form.ip_address" :disabled="form.processing" />
+                        <InputError :message="form.errors.ip_address" />
+                    </div>
                 </div>
 
                 <DialogFooter>

@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import ComputerDialog from '@/components/rooms/ComputerDialog.vue';
-import { useComputerStore } from '@/stores/computer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Room } from '@/types';
 import { PlusIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import ComputerItem from './ComputerItem.vue';
 
-// Component props - accepts room data that contains the grid dimensions and computers
 const props = defineProps<{
     room: {
         data: Room;
     };
+    selectedComputers: string[];
 }>();
 
-// Use centralized computer store for state management instead of local component state
-const computerStore = useComputerStore();
+const emit = defineEmits<{
+    toggleSelection: [computerId: string];
+}>();
 
 /**
  * Creates a 2D grid representation of the room
@@ -46,27 +47,11 @@ const gridCells = computed(() => {
 });
 
 /**
- * Handles computer selection with the following behaviors:
- * - Normal click: Select only the clicked computer
- * - Ctrl+click: Toggle selection of the clicked computer (multi-select)
- * @param id The ID of the computer being clicked
- * @param event Mouse event to check for modifier keys
+ * Handles a click on a computer item to toggle its selection
+ * @param computerId The ID of the computer to toggle
  */
-const handleClick = (computerId: string, event: MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering the parent cell click
-
-    // Check if Ctrl key is pressed for multi-selection
-    if (event.ctrlKey) {
-        // Toggle selection
-        if (computerStore.selectedComputers.includes(computerId)) {
-            computerStore.selectedComputers = computerStore.selectedComputers.filter((id) => id !== computerId);
-        } else {
-            computerStore.selectedComputers.push(computerId);
-        }
-    } else {
-        // Replace selection with just this computer
-        computerStore.selectedComputers = [computerId];
-    }
+const handleToggleSelection = (computerId: string) => {
+    emit('toggleSelection', computerId);
 };
 
 // State for the computer creation dialog
@@ -109,7 +94,7 @@ const roomInfo = computed(() => {
         </div>
 
         <!-- Scrollable grid container with contained height -->
-        <div class="h-[calc(100vh-12rem)] overflow-auto p-4">
+        <ScrollArea class="grid h-[calc(100vh-12rem)] place-content-center p-4">
             <div class="flex min-h-full items-center justify-center">
                 <div
                     class="grid auto-rows-min gap-4 p-2"
@@ -127,8 +112,8 @@ const roomInfo = computed(() => {
                                 :key="`computer-${cell.row}-${cell.col}`"
                                 :index="cell.index"
                                 :computer="cell.computer"
-                                :isSelected="computerStore.selectedComputers.includes(cell.computer.id)"
-                                @click="handleClick(cell.computer.id, $event)"
+                                :isSelected="selectedComputers.includes(cell.computer.id)"
+                                @click="handleToggleSelection(cell.computer.id)"
                             />
 
                             <!-- Improved empty cell with "+" button -->
@@ -149,7 +134,7 @@ const roomInfo = computed(() => {
                     </template>
                 </div>
             </div>
-        </div>
+        </ScrollArea>
 
         <!-- Modal dialog for adding a new computer -->
         <ComputerDialog

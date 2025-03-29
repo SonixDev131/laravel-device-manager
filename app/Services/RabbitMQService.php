@@ -56,19 +56,19 @@ class RabbitMQService
     /**
      * Gửi lệnh đến một máy tính cụ thể
      */
-    public function sendCommandToComputer($computerId, $roomId, array $command): bool
+    public function sendCommandToComputer($computerId, $roomId, string $commandType): bool
     {
         $routingKey = "command.room_{$roomId}.computer_{$computerId}";
 
         $message = new AMQPMessage(
-            json_encode($command),
-            [
-                'content_type' => 'application/json',
-                'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-                'message_id' => $command['id'],
-                'timestamp' => time(),
-                'expiration' => (60 * 10 * 1000), // 10 phút, tính bằng milliseconds
-            ]
+            json_encode($commandType),
+            // [
+            // 'content_type' => 'application/json',
+            // 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
+            // 'message_id' => $command['id'],
+            // 'timestamp' => time(),
+            // 'expiration' => (60 * 10 * 1000), // 10 phút, tính bằng milliseconds
+            // ]
         );
 
         $this->channel->basic_publish($message, 'unilab.commands', $routingKey);
