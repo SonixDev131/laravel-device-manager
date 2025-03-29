@@ -23,12 +23,9 @@ class RoomCommandController extends Controller
         // và gửi lệnh đến tất cả các máy tính trong nhóm đó.
         // Nếu target_type là 'all', bạn có thể gửi lệnh đến tất cả các máy tính trong phòng.
         $computerIds = match ($validated['target_type']) {
-            'single' => [$validated['computer_id']],
-            'group' => $validated['computer_ids'],
-            'all' => $room->computers()->pluck('id')->toArray(),
+            'single' => $validated['computer_id'],
+            'group' => $validated['computer_ids'] ?? $room->computers()->pluck('id')->toArray(),
         };
-
-        Debugbar::info($computerIds);
 
         // Gửi lệnh đến từng máy tính
         foreach ($computerIds as $computerId) {

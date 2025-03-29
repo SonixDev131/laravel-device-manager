@@ -1,184 +1,233 @@
-<script setup lang="ts">
+<script lang="ts" setup>
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     CheckSquareIcon,
     ChevronsDownIcon,
     ComputerIcon,
+    DownloadIcon,
     ImageIcon,
     LockIcon,
     LogOutIcon,
+    MessageSquareIcon,
     PowerIcon,
     PowerOffIcon,
     RefreshCwIcon,
     XIcon,
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
-// Define component props
+const commandMode = defineModel<string>('commandMode');
+
 const props = defineProps<{
-    // Selected computer IDs
     selectedComputers: string[];
-    // Total number of computers available
     totalComputers: number;
 }>();
 
-// Define component events
 const emit = defineEmits<{
-    // Event to clear all selections
     clearSelection: [];
-    // Event to select all computers
     selectAll: [];
-    // Event to execute a command on selected computers
-    executeCommand: [commandType: string];
+    executeCommand: [command: CommandType];
 }>();
 
-// Computed properties
-const hasSelectedComputers = computed(() => props.selectedComputers.length > 0);
-const selectedCount = computed(() => props.selectedComputers.length);
-const hasComputers = computed(() => props.totalComputers > 0);
-const allSelected = computed(() => props.selectedComputers.length === props.totalComputers && props.totalComputers > 0);
+// Define valid command types
+type CommandType = 'shutdown' | 'restart' | 'logout' | 'lock' | 'message' | 'screenshot' | 'update';
 
-// Handler functions
-const toggleSelectAll = () => {
-    if (allSelected.value) {
+const localCommandMode = ref(commandMode.value || 'selected');
+const showConfirmation = ref(false);
+const pendingCommand = ref<CommandType | null>(null);
+const commandDescription = ref('');
+
+// Watch for changes to command mode and emit the update
+const updateCommandMode = (mode: 'selected' | 'all') => {
+    // Khi chuyển sang broadcast mode, tự động clear selection để tránh nhầm lẫn UI
+    if (mode === 'all' && props.selectedComputers.length > 0) {
         emit('clearSelection');
+    }
+
+    localCommandMode.value = mode;
+    emit('update:commandMode', mode);
+};
+
+// Watch for prop changes from parent
+watch(
+    () => commandMode,
+    (newMode) => {
+        if (newMode !== undefined) {
+            localCommandMode.value = newMode;
+
+            // Đảm bảo trạng thái đồng bộ khi commandMode thay đổi từ component cha
+            if (newMode === 'all' && props.selectedComputers.length > 0) {
+                emit('clearSelection');
+            }
+        }
+    },
+);
+
+const selectionText = computed(() => {
+    if (localCommandMode.value === 'all') {
+        return 'Broadcasting to all computers';
+    }
+    return `Selected: ${props.selectedComputers.length} of ${props.totalComputers}`;
+});
+
+const isSelectionEmpty = computed(() => {
+    return localCommandMode.value === 'selected' && props.selectedComputers.length === 0;
+});
+
+// Map commands to descriptions
+const commandDescriptions: Record<CommandType, string> = {
+    shutdown: 'Shutdown selected computers',
+    restart: 'Restart selected computers',
+    logout: 'Log out users from selected computers',
+    lock: 'Lock selected computers',
+    message: 'Send message to selected computers',
+    screenshot: 'Take screenshot of selected computers',
+    update: 'Update agent on selected computers',
+};
+
+// Handle command with confirmation for critical commands
+const handleCommand = (command: CommandType) => {
+    const criticalCommands = ['shutdown', 'restart', 'logout'];
+
+    // Update description based on current mode
+    const baseDescription = commandDescriptions[command] || 'Execute command';
+    commandDescription.value = localCommandMode.value === 'all' ? baseDescription.replace('selected computers', 'all computers') : baseDescription;
+
+    if (criticalCommands.includes(command)) {
+        pendingCommand.value = command;
+        showConfirmation.value = true;
     } else {
-        emit('selectAll');
+        emit('executeCommand', command);
     }
 };
 
-const clearSelection = () => {
-    emit('clearSelection');
+// Confirm critical command execution
+const confirmCommand = () => {
+    if (pendingCommand.value) {
+        emit('executeCommand', pendingCommand.value);
+        pendingCommand.value = null;
+        showConfirmation.value = false;
+    }
 };
 
-const handleExecuteCommand = (commandType: string) => {
-    emit('executeCommand', commandType);
+// Cancel confirmation
+const cancelCommand = () => {
+    pendingCommand.value = null;
+    showConfirmation.value = false;
 };
 
-// Group commands for better organization
-const commandGroups = [
-    {
-        label: 'Power Actions',
-        icon: PowerIcon,
-        commands: [
-            { id: 'power_on', icon: PowerIcon, label: 'Power On' },
-            { id: 'power_down', icon: PowerOffIcon, label: 'Power Down' },
-            { id: 'reboot', icon: RefreshCwIcon, label: 'Reboot' },
-        ],
-    },
-    {
-        label: 'Security',
-        icon: LockIcon,
-        commands: [
-            { id: 'lock', icon: LockIcon, label: 'Lock' },
-            { id: 'log_off', icon: LogOutIcon, label: 'Log Off' },
-        ],
-    },
-    {
-        label: 'Monitoring',
-        icon: ImageIcon,
-        commands: [{ id: 'screenshot', icon: ImageIcon, label: 'Screenshot' }],
-    },
-];
+// Only expose one executeCommand method
+defineExpose({
+    executeCommand: (command: CommandType) => handleCommand(command),
+});
 </script>
 
 <template>
-    <div class="mb-4 flex flex-col space-y-3 rounded-lg border bg-card p-3 shadow-sm">
-        <!-- Computer selection indicator with selection controls -->
-        <div class="flex items-center justify-between border-b pb-2">
+    <div class="flex flex-col gap-4 rounded-md border border-border bg-card p-4 shadow-sm">
+        <!-- Selection controls row with consistent height -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <ComputerIcon class="h-4 w-4 text-muted-foreground" />
-                <span class="text-sm font-medium">Computer Controls</span>
+                <Badge :variant="localCommandMode === 'all' ? 'default' : 'outline'" class="h-8 transition-colors">
+                    <ComputerIcon v-if="localCommandMode === 'all'" class="mr-1 h-3.5 w-3.5" />
+                    {{ selectionText }}
+                </Badge>
+                <div class="flex min-h-8 items-center">
+                    <template v-if="localCommandMode === 'selected'">
+                        <Button size="sm" variant="outline" @click="emit('clearSelection')" class="gap-1">
+                            <XIcon class="h-3.5 w-3.5" />
+                            Clear
+                        </Button>
+                        <Button size="sm" variant="outline" @click="emit('selectAll')" class="ml-2 gap-1">
+                            <CheckSquareIcon class="h-3.5 w-3.5" />
+                            Select All
+                        </Button>
+                    </template>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <!-- Selection count indicator -->
-                <div v-if="hasSelectedComputers" class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    {{ selectedCount }} selected
+            <RadioGroup v-model="localCommandMode" class="flex gap-4" @update:modelValue="updateCommandMode">
+                <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="selected" value="selected" />
+                    <Label for="selected">Manual Selection</Label>
                 </div>
-                <div v-else class="text-xs text-muted-foreground">No computers selected</div>
-
-                <!-- Selection action buttons -->
-                <div class="flex items-center">
-                    <Button
-                        v-if="hasComputers"
-                        variant="ghost"
-                        size="icon"
-                        class="h-7 w-7"
-                        :class="{ 'bg-primary/10': allSelected }"
-                        @click="toggleSelectAll"
-                        title="Select all computers"
-                    >
-                        <CheckSquareIcon class="h-4 w-4" :class="allSelected ? 'text-primary' : 'text-muted-foreground'" />
-                    </Button>
-
-                    <Button v-if="hasSelectedComputers" variant="ghost" size="icon" class="h-7 w-7" @click="clearSelection" title="Clear selection">
-                        <XIcon class="h-4 w-4 text-muted-foreground" />
-                    </Button>
+                <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="all" value="all" />
+                    <Label for="all">Broadcast to All</Label>
                 </div>
+            </RadioGroup>
+        </div>
+
+        <!-- Commands section -->
+        <div class="space-y-4">
+            <!-- Quick access common commands with consistent button height -->
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('lock')">
+                    <LockIcon class="mr-2 h-4 w-4" />
+                    Lock
+                </Button>
+
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('message')">
+                    <MessageSquareIcon class="mr-2 h-4 w-4" />
+                    Message
+                </Button>
+
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('screenshot')">
+                    <ImageIcon class="mr-2 h-4 w-4" />
+                    Screenshot
+                </Button>
+
+                <!-- Power controls dropdown with consistent height -->
+                <DropdownMenu>
+                    <DropdownMenuTrigger as="div">
+                        <Button class="h-10 w-full flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty">
+                            <PowerIcon class="mr-2 h-4 w-4" />
+                            Power
+                            <ChevronsDownIcon class="ml-auto h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem @click="handleCommand('shutdown')" class="text-destructive">
+                            <PowerOffIcon class="mr-2 h-4 w-4" />
+                            Shutdown
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="handleCommand('restart')">
+                            <RefreshCwIcon class="mr-2 h-4 w-4" />
+                            Restart
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="handleCommand('logout')">
+                            <LogOutIcon class="mr-2 h-4 w-4" />
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Maintenance commands -->
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('update')">
+                    <DownloadIcon class="mr-2 h-4 w-4" />
+                    Update
+                </Button>
             </div>
         </div>
 
-        <!-- Desktop view - show all dropdown buttons -->
-        <div class="hidden flex-wrap gap-2 md:flex">
-            <DropdownMenu v-for="group in commandGroups" :key="group.label">
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" :disabled="!hasSelectedComputers" class="flex items-center gap-1">
-                        <component :is="group.icon" class="h-4 w-4" />
-                        <span>{{ group.label }}</span>
-                        <ChevronsDownIcon class="ml-1 h-3 w-3" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" class="w-48">
-                    <DropdownMenuLabel>{{ group.label }}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        v-for="command in group.commands"
-                        :key="command.id"
-                        :disabled="!hasSelectedComputers"
-                        @click="handleExecuteCommand(command.id)"
-                    >
-                        <component :is="command.icon" class="mr-2 h-4 w-4" />
-                        <span>{{ command.label }}</span>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        <!-- Confirmation dialog with backdrop blur for better focus -->
+        <div
+            v-if="showConfirmation"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-all"
+            @click.self="cancelCommand"
+        >
+            <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg animate-in fade-in-50 zoom-in-95">
+                <h3 class="text-lg font-semibold">Confirm Action</h3>
+                <p class="mt-2 text-muted-foreground">{{ commandDescription }}</p>
 
-        <!-- Mobile/compact view - more concise UI -->
-        <div class="grid grid-cols-3 gap-2 md:hidden">
-            <DropdownMenu v-for="group in commandGroups" :key="group.label">
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" :disabled="!hasSelectedComputers" class="w-full">
-                        <div class="flex w-full items-center justify-center gap-1">
-                            <component :is="group.icon" class="h-4 w-4" />
-                            <span class="hidden sm:inline">{{ group.label }}</span>
-                            <ChevronsDownIcon class="ml-1 h-3 w-3" />
-                        </div>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-48">
-                    <DropdownMenuLabel>{{ group.label }}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        v-for="command in group.commands"
-                        :key="command.id"
-                        :disabled="!hasSelectedComputers"
-                        @click="handleExecuteCommand(command.id)"
-                    >
-                        <component :is="command.icon" class="mr-2 h-4 w-4" />
-                        <span>{{ command.label }}</span>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <Button variant="outline" @click="cancelCommand">Cancel</Button>
+                    <Button variant="destructive" @click="confirmCommand">Confirm</Button>
+                </div>
+            </div>
         </div>
     </div>
 </template>

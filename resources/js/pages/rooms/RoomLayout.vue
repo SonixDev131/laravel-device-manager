@@ -37,33 +37,50 @@ const toggleComputerSelection = (computerId: string) => {
     }
 };
 
+// Thêm ref cho chế độ điều khiển
+const commandMode = ref<'selected' | 'all'>('selected');
+
 // Command execution
 const executeCommand = (commandType: string) => {
-    // Implement command execution logic here
-    console.log(`Executing ${commandType} on computers:`, selectedComputers.value);
-    // This would typically make an API call to execute the command on the selected computers
-    if (selectedComputers.value.length === 0) return;
+    console.log(`Executing ${commandType} on computers:`, commandMode.value === 'all' ? 'all computers' : selectedComputers.value);
 
-    if (selectedComputers.value.length === 1) {
+    if (commandMode.value === 'selected') {
+        // Kiểm tra nếu không có máy nào được chọn
+        if (selectedComputers.value.length === 0) return;
+
+        if (selectedComputers.value.length === 1) {
+            router.post(
+                route('rooms.commands.dispatch', {
+                    room: props.room.data.id,
+                }),
+                {
+                    command_type: commandType.toUpperCase(),
+                    target_type: 'single',
+                    computer_id: selectedComputers.value[0],
+                },
+            );
+        } else {
+            router.post(
+                route('rooms.commands.dispatch', {
+                    room: props.room.data.id,
+                }),
+                {
+                    command_type: commandType.toUpperCase(),
+                    target_type: 'group',
+                    computer_ids: selectedComputers.value,
+                },
+            );
+        }
+    } else {
+        // Gửi lệnh đến toàn bộ phòng
         router.post(
             route('rooms.commands.dispatch', {
                 room: props.room.data.id,
             }),
             {
                 command_type: commandType.toUpperCase(),
-                target_type: 'single',
-                computer_id: selectedComputers.value[0],
-            },
-        );
-    } else {
-        router.post(
-            route('rooms.commands.dispatch', {
-                room_id: props.room.data.id,
-            }),
-            {
-                command_type: commandType.toUpperCase(),
                 target_type: 'group',
-                computer_ids: selectedComputers.value,
+                // Không cần computer_ids - backend sẽ hiểu là toàn bộ phòng
             },
         );
     }
@@ -89,6 +106,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <ControlBar
                 :selected-computers="selectedComputers"
                 :total-computers="totalComputers"
+                :command-mode="commandMode"
+                @update:command-mode="commandMode = $event"
                 @clear-selection="clearSelection"
                 @select-all="selectAllComputers"
                 @execute-command="executeCommand"
