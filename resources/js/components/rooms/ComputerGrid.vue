@@ -11,6 +11,7 @@ const props = defineProps<{
         data: Room;
     };
     selectedComputers: string[];
+    commandMode: 'selected' | 'all';
 }>();
 
 const emit = defineEmits<{
@@ -113,7 +114,8 @@ const roomInfo = computed(() => {
                                 :index="cell.index"
                                 :computer="cell.computer"
                                 :isSelected="selectedComputers.includes(cell.computer.id)"
-                                @click="handleToggleSelection(cell.computer.id)"
+                                :isSelectable="commandMode === 'selected'"
+                                @click="commandMode === 'selected' ? handleToggleSelection(cell.computer.id) : null"
                             />
 
                             <!-- Improved empty cell with "+" button -->

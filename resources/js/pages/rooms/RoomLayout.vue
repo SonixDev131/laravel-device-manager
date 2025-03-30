@@ -6,6 +6,17 @@ import { Room, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Rooms',
+        href: route('rooms.index'),
+    },
+    {
+        title: 'Room Layout',
+        href: '#',
+    },
+];
+
 const props = defineProps<{
     room: {
         data: Room;
@@ -14,7 +25,8 @@ const props = defineProps<{
 
 // State management (moved from store)
 const selectedComputers = ref<string[]>([]);
-
+// Thêm ref cho chế độ điều khiển
+const commandMode = ref<'selected' | 'all'>('selected');
 // Computed properties
 const totalComputers = computed(() => props.room.data.computers?.length || 0);
 
@@ -36,9 +48,6 @@ const toggleComputerSelection = (computerId: string) => {
         selectedComputers.value.splice(index, 1);
     }
 };
-
-// Thêm ref cho chế độ điều khiển
-const commandMode = ref<'selected' | 'all'>('selected');
 
 // Command execution
 const executeCommand = (commandType: string) => {
@@ -79,23 +88,12 @@ const executeCommand = (commandType: string) => {
             }),
             {
                 command_type: commandType.toUpperCase(),
-                target_type: 'group',
+                target_type: 'all',
                 // Không cần computer_ids - backend sẽ hiểu là toàn bộ phòng
             },
         );
     }
 };
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Rooms',
-        href: route('rooms.index'),
-    },
-    {
-        title: 'Room Layout',
-        href: '#',
-    },
-];
 </script>
 
 <template>
@@ -106,13 +104,18 @@ const breadcrumbs: BreadcrumbItem[] = [
             <ControlBar
                 :selected-computers="selectedComputers"
                 :total-computers="totalComputers"
-                :command-mode="commandMode"
-                @update:command-mode="commandMode = $event"
+                v-model:commandMode="commandMode"
                 @clear-selection="clearSelection"
                 @select-all="selectAllComputers"
                 @execute-command="executeCommand"
             />
-            <ComputerGrid :room="room" :selected-computers="selectedComputers" @toggle-selection="toggleComputerSelection" class="flex-1" />
+            <ComputerGrid
+                :room="room"
+                :selected-computers="selectedComputers"
+                :commandMode="commandMode"
+                @toggle-selection="toggleComputerSelection"
+                class="flex-1"
+            />
         </div>
     </AppLayout>
 </template>

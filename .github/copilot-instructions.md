@@ -33,10 +33,7 @@ public function store(CreateTodoRequest $request, CreateTodoAction $action)
 app/Models
 	•	Avoid fillable.
 
-database/migrations
-	•	Omit down() in new migrations.
-
-3. Testing
+1. Testing
 	•	Use Pest PHP for all tests.
 	•	Run composer lint after changes.
 	•	Run composer test before finalizing.

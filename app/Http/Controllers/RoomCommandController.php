@@ -16,21 +16,15 @@ class RoomCommandController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
         $commandType = $validated['command_type'];
-        // Xử lý các trường hợp khác nhau dựa trên target_type
-        // Ví dụ: nếu target_type là 'single', bạn có thể cần lấy computer_id từ validated dữ liệu
-        // và gửi lệnh đến máy tính cụ thể đó.
-        // Nếu target_type là 'group', bạn có thể cần lấy danh sách computer_ids từ validated dữ liệu
-        // và gửi lệnh đến tất cả các máy tính trong nhóm đó.
-        // Nếu target_type là 'all', bạn có thể gửi lệnh đến tất cả các máy tính trong phòng.
-        $computerIds = match ($validated['target_type']) {
-            'single' => $validated['computer_id'],
-            'group' => $validated['computer_ids'] ?? $room->computers()->pluck('id')->toArray(),
-        };
 
-        // Gửi lệnh đến từng máy tính
-        foreach ($computerIds as $computerId) {
-            $action->handle($computerId, $room->id, $commandType);
-        }
+        match ($validated['target_type']) {
+            'single' => $action->publishCommandToComputer($validated['computer_id'], $room->id, $commandType),
+            'group' => ! empty($validated['computer_ids'])
+                ? $action->publishCommandToMultipleComputers($validated['computer_ids'], $room->id, $commandType)
+                : null,
+            'all' => $action->publishCommandToRoom($room->id, $commandType),
+            default => null,
+        };
 
         return to_route('rooms.show', $room->id);
     }

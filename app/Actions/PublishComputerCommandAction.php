@@ -7,12 +7,36 @@ use App\Services\RabbitMQService;
 class PublishComputerCommandAction
 {
     public function __construct(
-        private RabbitMQService $rabbitMQService
+        private readonly RabbitMQService $rabbitMQService
     ) {}
 
-    public function handle(string $computerId, string $roomId, string $commandType)
+    /**
+     * Send command to a specific computer
+     */
+    public function publishCommandToComputer(string $computerId, string $roomId, string $commandType): bool
     {
-        // Publish the command to RabbitMQ
-        $this->rabbitMQService->sendCommandToComputer($computerId, $roomId, $commandType);
+        return $this->rabbitMQService->sendCommandToComputer($computerId, $roomId, $commandType);
+    }
+
+    /**
+     * Send command to multiple computers in a room
+     */
+    public function publishCommandToMultipleComputers(array $computerIds, string $roomId, string $commandType): array
+    {
+        $results = [];
+
+        foreach ($computerIds as $computerId) {
+            $results[$computerId] = $this->publishCommandToComputer($computerId, $roomId, $commandType);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Send command to all computers in a room
+     */
+    public function publishCommandToRoom(string $roomId, string $commandType): bool
+    {
+        return $this->rabbitMQService->sendCommandToRoom($roomId, $commandType);
     }
 }

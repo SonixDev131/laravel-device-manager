@@ -85,10 +85,10 @@ class RabbitMQService
 
         $message = new AMQPMessage(
             json_encode($command),
-            [
-                'content_type' => 'application/json',
-                'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-            ]
+            // [
+            //     'content_type' => 'application/json',
+            //     'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
+            // ]
         );
 
         $this->channel->basic_publish($message, 'unilab.commands', $routingKey);

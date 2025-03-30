@@ -20,7 +20,9 @@ import {
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
-const commandMode = defineModel<string>('commandMode');
+const commandMode = defineModel<'selected' | 'all'>('commandMode', {
+    default: 'selected',
+});
 
 const props = defineProps<{
     selectedComputers: string[];
@@ -33,49 +35,32 @@ const emit = defineEmits<{
     executeCommand: [command: CommandType];
 }>();
 
-// Define valid command types
 type CommandType = 'shutdown' | 'restart' | 'logout' | 'lock' | 'message' | 'screenshot' | 'update';
 
-const localCommandMode = ref(commandMode.value || 'selected');
 const showConfirmation = ref(false);
 const pendingCommand = ref<CommandType | null>(null);
 const commandDescription = ref('');
 
-// Watch for changes to command mode and emit the update
-const updateCommandMode = (mode: 'selected' | 'all') => {
-    // Khi chuyển sang broadcast mode, tự động clear selection để tránh nhầm lẫn UI
-    if (mode === 'all' && props.selectedComputers.length > 0) {
-        emit('clearSelection');
-    }
-
-    localCommandMode.value = mode;
-    emit('update:commandMode', mode);
-};
-
-// Watch for prop changes from parent
 watch(
-    () => commandMode,
+    commandMode,
     (newMode) => {
-        if (newMode !== undefined) {
-            localCommandMode.value = newMode;
-
-            // Đảm bảo trạng thái đồng bộ khi commandMode thay đổi từ component cha
-            if (newMode === 'all' && props.selectedComputers.length > 0) {
-                emit('clearSelection');
-            }
+        // Đảm bảo trạng thái đồng bộ khi commandMode thay đổi từ component cha
+        if (newMode === 'all' && props.selectedComputers.length > 0) {
+            emit('clearSelection');
         }
     },
+    { immediate: true }, // chạy ngay khi component được khởi tạo
 );
 
 const selectionText = computed(() => {
-    if (localCommandMode.value === 'all') {
+    if (commandMode.value === 'all') {
         return 'Broadcasting to all computers';
     }
     return `Selected: ${props.selectedComputers.length} of ${props.totalComputers}`;
 });
 
 const isSelectionEmpty = computed(() => {
-    return localCommandMode.value === 'selected' && props.selectedComputers.length === 0;
+    return commandMode.value === 'selected' && props.selectedComputers.length === 0;
 });
 
 // Map commands to descriptions
@@ -95,7 +80,7 @@ const handleCommand = (command: CommandType) => {
 
     // Update description based on current mode
     const baseDescription = commandDescriptions[command] || 'Execute command';
-    commandDescription.value = localCommandMode.value === 'all' ? baseDescription.replace('selected computers', 'all computers') : baseDescription;
+    commandDescription.value = commandMode.value === 'all' ? baseDescription.replace('selected computers', 'all computers') : baseDescription;
 
     if (criticalCommands.includes(command)) {
         pendingCommand.value = command;
@@ -119,11 +104,6 @@ const cancelCommand = () => {
     pendingCommand.value = null;
     showConfirmation.value = false;
 };
-
-// Only expose one executeCommand method
-defineExpose({
-    executeCommand: (command: CommandType) => handleCommand(command),
-});
 </script>
 
 <template>
@@ -131,12 +111,12 @@ defineExpose({
         <!-- Selection controls row with consistent height -->
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <Badge :variant="localCommandMode === 'all' ? 'default' : 'outline'" class="h-8 transition-colors">
-                    <ComputerIcon v-if="localCommandMode === 'all'" class="mr-1 h-3.5 w-3.5" />
+                <Badge :variant="commandMode === 'all' ? 'default' : 'outline'" class="h-8 transition-colors">
+                    <ComputerIcon v-if="commandMode === 'all'" class="mr-1 h-3.5 w-3.5" />
                     {{ selectionText }}
                 </Badge>
                 <div class="flex min-h-8 items-center">
-                    <template v-if="localCommandMode === 'selected'">
+                    <template v-if="commandMode === 'selected'">
                         <Button size="sm" variant="outline" @click="emit('clearSelection')" class="gap-1">
                             <XIcon class="h-3.5 w-3.5" />
                             Clear
@@ -149,7 +129,8 @@ defineExpose({
                 </div>
             </div>
 
-            <RadioGroup v-model="localCommandMode" class="flex gap-4" @update:modelValue="updateCommandMode">
+            <!-- Thay đổi từ v-model:modelValue thành v-model -->
+            <RadioGroup v-model:modelValue="commandMode" class="flex gap-4">
                 <div class="flex items-center space-x-2">
                     <RadioGroupItem id="selected" value="selected" />
                     <Label for="selected">Manual Selection</Label>

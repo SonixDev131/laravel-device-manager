@@ -28,7 +28,7 @@ class PublishComputerCommandRequest extends FormRequest
             'target_type' => ['required', 'in:single,group,all'],
             'computer_id' => ['required_if:target_type,single', 'string', 'exists:computers,id'],
             'computer_ids' => ['required_if:target_type,group', 'array'],
-            'computer_ids.*' => ['integer', 'exists:computers,id'],
+            'computer_ids.*' => ['string', 'exists:computers,id'],
             'command_type' => ['required', 'string', Rule::in($allowedCommands)],
             'params' => 'nullable|array',
         ];
