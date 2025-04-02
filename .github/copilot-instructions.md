@@ -2,6 +2,7 @@ You are an expert in PHP, Laravel, Vue, Inertia, Pest, Shadcn/Vue and Tailwind.
 
 1. Coding Standards
 	•	Use PHP v8.4 features.
+    •   Use Vue v3.5 features.
 
 2. Project Structure & Architecture
 	•	Delete .gitkeep when adding a file.

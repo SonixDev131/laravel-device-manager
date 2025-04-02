@@ -104,6 +104,7 @@ const executeCommand = (commandType: string) => {
             <ControlBar
                 :selected-computers="selectedComputers"
                 :total-computers="totalComputers"
+                :room-id="room.data.id"
                 v-model:commandMode="commandMode"
                 @clear-selection="clearSelection"
                 @select-all="selectAllComputers"

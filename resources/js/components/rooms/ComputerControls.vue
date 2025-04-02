@@ -16,9 +16,11 @@ import {
     PowerIcon,
     PowerOffIcon,
     RefreshCwIcon,
+    TerminalIcon,
     XIcon,
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import InstallationScriptDialog from './InstallationScriptDialog.vue';
 
 const commandMode = defineModel<'selected' | 'all'>('commandMode', {
     default: 'selected',
@@ -27,6 +29,7 @@ const commandMode = defineModel<'selected' | 'all'>('commandMode', {
 const props = defineProps<{
     selectedComputers: string[];
     totalComputers: number;
+    roomId: string; // Add roomId prop
 }>();
 
 const emit = defineEmits<{
@@ -104,6 +107,14 @@ const cancelCommand = () => {
     pendingCommand.value = null;
     showConfirmation.value = false;
 };
+
+// Add state for installation script dialog
+const installationScriptOpen = ref(false);
+
+// Open installation script dialog
+const openInstallationScript = () => {
+    installationScriptOpen.value = true;
+};
 </script>
 
 <template>
@@ -145,7 +156,7 @@ const cancelCommand = () => {
         <!-- Commands section -->
         <div class="space-y-4">
             <!-- Quick access common commands with consistent button height -->
-            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('lock')">
                     <LockIcon class="mr-2 h-4 w-4" />
                     Lock
@@ -191,6 +202,12 @@ const cancelCommand = () => {
                     <DownloadIcon class="mr-2 h-4 w-4" />
                     Update
                 </Button>
+
+                <!-- Add Installation Script button -->
+                <Button class="h-10 flex-1 justify-start" variant="outline" @click="openInstallationScript">
+                    <TerminalIcon class="mr-2 h-4 w-4" />
+                    Install Agent
+                </Button>
             </div>
         </div>
 
@@ -210,5 +227,11 @@ const cancelCommand = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Installation Script Dialog -->
+        <InstallationScriptDialog
+            v-model:is-open="installationScriptOpen"
+            :room-id="roomId"
+        />
     </div>
 </template>
