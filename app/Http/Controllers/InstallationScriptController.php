@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GenerateInstallationScriptRequest;
@@ -7,7 +9,7 @@ use App\Models\InstallationToken;
 use App\Models\Room;
 use Illuminate\Support\Str;
 
-class InstallationScriptController extends Controller
+final class InstallationScriptController extends Controller
 {
     /**
      * Generate an installation script for the specified operating system.

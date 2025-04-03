@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\CreateComputerAction;
@@ -7,7 +9,7 @@ use App\Http\Requests\StoreComputerRequest;
 use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
 
-class RoomComputerController extends Controller
+final class RoomComputerController extends Controller
 {
     /**
      * Store a newly created resource in storage.

@@ -1,55 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitMQService
+final class RabbitMQService
 {
-    protected $connection;
+    private $connection;
 
-    protected $channel;
+    private $channel;
 
     public function __construct()
     {
         try {
             $this->connect();
             $this->setupExchanges();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('RabbitMQ connection error: '.$e->getMessage());
             // You might want to handle this differently depending on your app's needs
         }
     }
 
-    protected function connect(): bool
+    public function __destruct()
     {
+        if ($this->channel) {
+            $this->channel->close();
+        }
 
-        $this->connection = new AMQPStreamConnection(
-            config('rabbitmq.host'),
-            config('rabbitmq.port'),
-            config('rabbitmq.user'),
-            config('rabbitmq.password'),
-            config('rabbitmq.vhost'),
-        );
-
-        $this->channel = $this->connection->channel();
-
-        return true;
-    }
-
-    protected function setupExchanges()
-    {
-        // Declare exchanges
-        foreach (config('rabbitmq.exchanges') as $exchange) {
-            $this->channel->exchange_declare(
-                $exchange['name'],    // exchange name
-                $exchange['type'],    // type
-                false,                // passive
-                $exchange['durable'], // durable
-                $exchange['auto_delete'] // auto_delete
-            );
+        if ($this->connection) {
+            $this->connection->close();
         }
     }
 
@@ -117,14 +101,33 @@ class RabbitMQService
         return true;
     }
 
-    public function __destruct()
+    private function connect(): bool
     {
-        if ($this->channel) {
-            $this->channel->close();
-        }
 
-        if ($this->connection) {
-            $this->connection->close();
+        $this->connection = new AMQPStreamConnection(
+            config('rabbitmq.host'),
+            config('rabbitmq.port'),
+            config('rabbitmq.user'),
+            config('rabbitmq.password'),
+            config('rabbitmq.vhost'),
+        );
+
+        $this->channel = $this->connection->channel();
+
+        return true;
+    }
+
+    private function setupExchanges()
+    {
+        // Declare exchanges
+        foreach (config('rabbitmq.exchanges') as $exchange) {
+            $this->channel->exchange_declare(
+                $exchange['name'],    // exchange name
+                $exchange['type'],    // type
+                false,                // passive
+                $exchange['durable'], // durable
+                $exchange['auto_delete'] // auto_delete
+            );
         }
     }
 }

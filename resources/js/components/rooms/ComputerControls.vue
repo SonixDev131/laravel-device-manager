@@ -229,9 +229,6 @@ const openInstallationScript = () => {
         </div>
 
         <!-- Installation Script Dialog -->
-        <InstallationScriptDialog
-            v-model:is-open="installationScriptOpen"
-            :room-id="roomId"
-        />
+        <InstallationScriptDialog v-model:is-open="installationScriptOpen" :room-id="roomId" />
     </div>
 </template>

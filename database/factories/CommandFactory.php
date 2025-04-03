@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\CommandStatus;
 use App\Models\Computer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class CommandFactory extends Factory
+final class CommandFactory extends Factory
 {
     public function definition(): array
     {

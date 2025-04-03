@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
 use App\Services\RabbitMQService;
 
-class PublishComputerCommandAction
+final class PublishComputerCommandAction
 {
     public function __construct(
         private readonly RabbitMQService $rabbitMQService

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\CreateRoomAction;
@@ -15,7 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class RoomController extends Controller
+final class RoomController extends Controller
 {
     /**
      * Display a listing of the resource.

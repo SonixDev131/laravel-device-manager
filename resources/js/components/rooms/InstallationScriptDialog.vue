@@ -176,7 +176,7 @@ const installCommand = computed(() => {
                     </div>
 
                     <!-- Generated Script -->
-                    <div class="space-y-2">
+                    <div class="mt-4 space-y-2">
                         <div class="flex items-center justify-between">
                             <Label>Generated Script ({{ scriptExtension }})</Label>
                             <div class="flex items-center gap-2">
@@ -186,11 +186,11 @@ const installCommand = computed(() => {
                                     Download
                                 </Button>
                                 <Button size="sm" variant="outline" @click="copy(scriptContent)" :disabled="isLoading || !scriptContent">
-                                    <span v-if="!copied">
+                                    <span v-if="!copied" class="flex items-center">
                                         <CopyIcon class="mr-2 h-4 w-4" />
                                         Copy
                                     </span>
-                                    <span v-else>
+                                    <span v-else class="flex items-center">
                                         <CheckIcon class="mr-2 h-4 w-4" />
                                         Copied
                                     </span>

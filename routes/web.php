@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\InstallationScriptController;
 use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomComputerController;
@@ -37,8 +39,8 @@ Route::post('rooms/installation-script/generate', [InstallationScriptController:
 //     ->where('os', 'windows|linux|mac');
 
 // Agent registration endpoint (to be implemented later)
-// Route::post('/api/computers/register', [ComputerController::class, 'register'])
-//     ->name('api.computers.register');
+Route::post('/api/computers/register', [ComputerController::class, 'register'])
+    ->name('api.computers.register');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

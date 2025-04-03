@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Actions\PublishComputerCommandAction;
@@ -7,7 +9,7 @@ use App\Http\Requests\PublishComputerCommandRequest;
 use App\Models\Room;
 use Illuminate\Http\RedirectResponse;
 
-class RoomCommandController extends Controller
+final class RoomCommandController extends Controller
 {
     public function handleCommand(
         PublishComputerCommandRequest $request,

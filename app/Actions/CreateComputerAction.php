@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions;
 
 use App\Models\Room;
 
-class CreateComputerAction
+final class CreateComputerAction
 {
     public function handle(Room $room, array $data): void
     {
