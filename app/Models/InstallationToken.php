@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,7 +40,7 @@ final class InstallationToken extends Model
     /**
      * Scope a query to only include valid tokens
      */
-    public function scopeValid($query)
+    public function scopeValid(Builder $query): Builder
     {
         return $query->where('expires_at', '>=', now());
     }

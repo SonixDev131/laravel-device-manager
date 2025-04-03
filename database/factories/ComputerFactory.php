@@ -8,7 +8,7 @@ use App\Models\Room;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-final class MachineFactory extends Factory
+final class ComputerFactory extends Factory
 {
     public function definition(): array
     {
@@ -21,7 +21,6 @@ final class MachineFactory extends Factory
             'pos_row' => $this->faker->numberBetween(1, 10),
             'pos_col' => $this->faker->numberBetween(1, 10),
             'is_online' => $this->faker->boolean(20), // 20% chance to be online
-            'last_seen' => $this->faker->dateTimeBetween('-30 days', 'now'),
         ];
     }
 }

@@ -6,14 +6,15 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 final class RabbitMQService
 {
-    private $connection;
+    private ?AMQPStreamConnection $connection = null;
 
-    private $channel;
+    private ?AMQPChannel $channel = null;
 
     public function __construct()
     {
@@ -40,7 +41,7 @@ final class RabbitMQService
     /**
      * Gửi lệnh đến một máy tính cụ thể
      */
-    public function sendCommandToComputer($computerId, $roomId, string $commandType): bool
+    public function sendCommandToComputer(string $computerId, string $roomId, string $commandType): bool
     {
         $routingKey = "command.room_{$roomId}.computer_{$computerId}";
 
@@ -63,7 +64,7 @@ final class RabbitMQService
     /**
      * Gửi lệnh đến tất cả máy tính trong phòng
      */
-    public function sendCommandToRoom($roomId, $command): bool
+    public function sendCommandToRoom(string $roomId, array $command): bool
     {
         $routingKey = "command.room_{$roomId}.*";
 
@@ -83,7 +84,7 @@ final class RabbitMQService
     /**
      * Phát hành cập nhật agent mới
      */
-    public function publishAgentUpdate($updateInfo, $osType = null, $versionRange = null): bool
+    public function publishAgentUpdate(array $updateInfo, ?string $osType = null, ?string $versionRange = null): bool
     {
         // Publish to update exchange
         $routingKey = $osType ? "updates.{$osType}.{$versionRange}" : 'updates.all';
@@ -103,7 +104,6 @@ final class RabbitMQService
 
     private function connect(): bool
     {
-
         $this->connection = new AMQPStreamConnection(
             config('rabbitmq.host'),
             config('rabbitmq.port'),
@@ -117,7 +117,7 @@ final class RabbitMQService
         return true;
     }
 
-    private function setupExchanges()
+    private function setupExchanges(): void
     {
         // Declare exchanges
         foreach (config('rabbitmq.exchanges') as $exchange) {

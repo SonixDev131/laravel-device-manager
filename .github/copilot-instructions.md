@@ -105,8 +105,8 @@ tests/
 ### Task Completion Checklist
 1. Write tests for new functionality
 2. Implement feature following standards
-3. Run static analysis (`composer lint`)
-4. Run tests (`composer test`)
+3. Run static analysis (`sail composer lint`)
+4. Run tests (`sail composer test`)
 5. Recompile assets if frontend changes were made
 6. Verify all coding standards are met
 7. Remove any temporary files (including `.gitkeep`)
