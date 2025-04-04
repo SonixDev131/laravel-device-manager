@@ -26,6 +26,7 @@ final class GenerateInstallationScriptRequest extends FormRequest
             'server_url' => ['required', 'url'],
             'room_id' => ['nullable', 'exists:rooms,id'],
             'auto_register' => ['boolean'],
+            'use_python' => ['boolean'],
         ];
     }
 }

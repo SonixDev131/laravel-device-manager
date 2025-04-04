@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,31 +13,30 @@ import { CheckIcon, CopyIcon, DownloadIcon } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import ScrollArea from '../ui/scroll-area/ScrollArea.vue';
 
-// Rest of the script remains unchanged
-const props = defineProps<{
-    isOpen: boolean;
-    roomId: string;
-}>();
+// Define types
+type OSType = 'windows' | 'linux' | 'mac';
+type ScriptType = 'powershell' | 'python' | 'bash';
 
-const emit = defineEmits<{
-    'update:isOpen': [value: boolean];
-}>();
+// Use defineModel for two-way binding
+const isOpen = defineModel<boolean>('isOpen');
+const roomId = defineModel<string>('roomId');
 
-// OS options
-const osType = ref('windows');
-const serverUrl = ref(window.location.origin);
-const autoRegister = ref(true);
-const includeRoomInfo = ref(true);
-const scriptContent = ref('');
-const isLoading = ref(false);
-const activeTab = ref('bash');
+// Form values
+const osType = ref<OSType>('windows');
+const serverUrl = ref<string>(window.location.origin);
+const autoRegister = ref<boolean>(true);
+const includeRoomInfo = ref<boolean>(true);
+const scriptContent = ref<string>('');
+const isLoading = ref<boolean>(false);
+const scriptType = ref<ScriptType>('powershell');
+const usePython = ref<boolean>(false);
 
 // For copy functionality
 const { copy, copied } = useClipboard();
 
 // Close dialog
 const closeDialog = () => {
-    emit('update:isOpen', false);
+    isOpen.value = false;
 };
 
 // Generate script based on selected options
@@ -47,8 +47,9 @@ const generateScript = async () => {
         const { data } = await axios.post(route('rooms.installation-script.generate'), {
             os_type: osType.value,
             server_url: serverUrl.value,
-            room_id: includeRoomInfo.value ? props.roomId : null,
+            room_id: includeRoomInfo.value ? roomId.value : null,
             auto_register: autoRegister.value,
+            use_python: osType.value === 'windows' && usePython.value,
         });
 
         scriptContent.value = data.script;
@@ -61,7 +62,7 @@ const generateScript = async () => {
 
 // Generate script when dialog opens
 watch(
-    () => props.isOpen,
+    () => isOpen.value,
     (isOpen) => {
         if (isOpen) {
             generateScript();
@@ -72,7 +73,8 @@ watch(
 
 // Handle script download
 const downloadScript = () => {
-    const filename = `install-agent-${osType.value}.${osType.value === 'windows' ? 'ps1' : 'sh'}`;
+    const extension = getScriptExtension();
+    const filename = `install-agent-${osType.value}.${extension}`;
     const blob = new Blob([scriptContent.value], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
@@ -85,21 +87,42 @@ const downloadScript = () => {
     URL.revokeObjectURL(url);
 };
 
-// Change script type and regenerate
+// Update script type based on OS selection and regenerate
 watch(osType, () => {
+    if (osType.value === 'windows') {
+        scriptType.value = usePython.value ? 'python' : 'powershell';
+    } else {
+        scriptType.value = 'bash';
+        usePython.value = false;
+    }
     generateScript();
-    // Set appropriate tab based on OS
-    activeTab.value = osType.value === 'windows' ? 'powershell' : 'bash';
 });
 
-// Computed script file extension
-const scriptExtension = computed(() => {
-    return osType.value === 'windows' ? 'ps1' : 'sh';
+// Watch for python option changes
+watch(usePython, () => {
+    if (osType.value === 'windows') {
+        scriptType.value = usePython.value ? 'python' : 'powershell';
+        generateScript();
+    }
 });
+
+// Get script extension based on OS and script type
+const getScriptExtension = (): string => {
+    if (osType.value === 'windows') {
+        return usePython.value ? 'py' : 'ps1';
+    }
+    return 'sh';
+};
+
+// Computed script file extension
+const scriptExtension = computed(() => getScriptExtension());
 
 // Generate installation command
 const installCommand = computed(() => {
     if (osType.value === 'windows') {
+        if (usePython.value) {
+            return `python install-agent.py`;
+        }
         return `powershell -ExecutionPolicy Bypass -File .\\install-agent.ps1`;
     } else {
         return `chmod +x ./install-agent.sh && sudo ./install-agent.sh`;
@@ -108,7 +131,7 @@ const installCommand = computed(() => {
 </script>
 
 <template>
-    <Dialog :open="props.isOpen" @update:open="emit('update:isOpen', $event)">
+    <Dialog :open="isOpen" @update:open="isOpen = $event">
         <!-- Add max-height and overflow handling to DialogContent -->
         <DialogContent class="flex max-h-[90vh] flex-col sm:max-w-3xl">
             <DialogHeader class="flex-shrink-0">
@@ -142,19 +165,44 @@ const installCommand = computed(() => {
                                 </RadioGroup>
                             </div>
 
+                            <!-- Script Type for Windows -->
+                            <div v-if="osType === 'windows'">
+                                <Label>Script Type</Label>
+                                <RadioGroup v-model="usePython" class="mt-1.5 flex gap-4">
+                                    <div class="flex items-center space-x-2">
+                                        <RadioGroupItem id="powershell" :value="false" />
+                                        <Label for="powershell">PowerShell</Label>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <RadioGroupItem id="python" :value="true" />
+                                        <Label for="python">Python</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
                             <div>
                                 <Label for="serverUrl">Server URL</Label>
                                 <Input id="serverUrl" v-model="serverUrl" placeholder="https://your-server.com" />
                             </div>
 
                             <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="autoRegister" v-model="autoRegister" class="h-4 w-4 rounded border-gray-300" />
-                                <Label for="autoRegister">Auto-register agent on installation</Label>
+                                <Checkbox id="autoRegister" :checked="autoRegister" @update:checked="autoRegister = $event" />
+                                <Label
+                                    for="autoRegister"
+                                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Auto-register agent on installation
+                                </Label>
                             </div>
 
                             <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="includeRoom" v-model="includeRoomInfo" class="h-4 w-4 rounded border-gray-300" />
-                                <Label for="includeRoom">Include room information in script</Label>
+                                <Checkbox id="includeRoom" :checked="includeRoomInfo" @update:checked="includeRoomInfo = $event" />
+                                <Label
+                                    for="includeRoom"
+                                    class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Include room information in script
+                                </Label>
                             </div>
                         </div>
 
@@ -198,16 +246,21 @@ const installCommand = computed(() => {
                             </div>
                         </div>
 
-                        <Tabs v-model="activeTab" class="w-full">
-                            <TabsList class="grid w-full grid-cols-2">
-                                <TabsTrigger value="bash" :disabled="osType === 'windows'">Bash (Linux/macOS)</TabsTrigger>
-                                <TabsTrigger value="powershell" :disabled="osType !== 'windows'">PowerShell (Windows)</TabsTrigger>
+                        <Tabs v-model="scriptType" class="w-full">
+                            <TabsList class="grid w-full" :class="osType === 'windows' ? 'grid-cols-3' : 'grid-cols-1'">
+                                <TabsTrigger value="powershell" :disabled="osType !== 'windows'"> PowerShell </TabsTrigger>
+                                <TabsTrigger value="python" :disabled="osType !== 'windows'" @click="usePython = true"> Python </TabsTrigger>
+                                <TabsTrigger value="bash" :disabled="osType === 'windows'" :class="osType === 'windows' ? '' : 'col-span-3'">
+                                    Bash
+                                </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="bash">
-                                <!-- Reduced rows from 12 to 8 to save vertical space -->
+                            <TabsContent value="powershell">
                                 <Textarea v-model="scriptContent" rows="8" class="font-mono text-sm" readonly />
                             </TabsContent>
-                            <TabsContent value="powershell">
+                            <TabsContent value="python">
+                                <Textarea v-model="scriptContent" rows="8" class="font-mono text-sm" readonly />
+                            </TabsContent>
+                            <TabsContent value="bash">
                                 <Textarea v-model="scriptContent" rows="8" class="font-mono text-sm" readonly />
                             </TabsContent>
                         </Tabs>

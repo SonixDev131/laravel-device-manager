@@ -4,23 +4,41 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Installation\GenerateInstallationScriptAction;
 use App\Http\Requests\GenerateInstallationScriptRequest;
 use App\Models\InstallationToken;
 use App\Models\Room;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
-final class InstallationScriptController extends Controller
+class InstallationScriptController extends Controller
 {
     /**
      * Generate an installation script for the specified operating system.
      */
-    public function generate(GenerateInstallationScriptRequest $request)
+    public function generate(GenerateInstallationScriptRequest $request, GenerateInstallationScriptAction $action): JsonResponse
     {
         $osType = $request->validated('os_type');
         $serverUrl = $request->validated('server_url');
         $roomId = $request->validated('room_id');
         $autoRegister = $request->validated('auto_register', true);
+        $usePython = $request->validated('use_python', false);
 
+        // Use Python script generator for Windows if requested
+        if ($usePython && $osType === 'windows') {
+            $script = $action->execute(
+                $osType,
+                $serverUrl,
+                $roomId,
+                $autoRegister
+            );
+
+            return response()->json([
+                'script' => $script,
+            ]);
+        }
+
+        // Otherwise use the original script generators
         // Generate installation token for secure registration
         $token = Str::random(64);
 
