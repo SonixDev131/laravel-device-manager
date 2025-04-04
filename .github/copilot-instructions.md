@@ -1,128 +1,68 @@
-# You are an expert in PHP, Laravel, Vue, Inertia, Pest, and Tailwind.
+# Laravel + Vue + Inertia: TDD-First Development Standards
 
-## 1. Language & Framework Standards
+## Core Principles
+- **TDD-first**: Write tests before implementation
+- **PHP 8.4**: Use strict types and modern features everywhere
+- **Thin Controllers**: Business logic in Action classes
+- **90%+ Test Coverage**: Required for all new code
 
-### PHP (v8.4)
-- Utilize PHP 8.4 features including:
-  - Typed properties
-  - Named arguments
-  - Constructor property promotion
-  - Match expressions
-  - Readonly properties
-  - First-class callable syntax
-- Declare strict types (`declare(strict_types=1)`) in all PHP files
+## Code Structure & Patterns
 
-### Laravel (v12.x)
-- Use model query builder (`Model::query()`) instead of `DB::` facade
-- Prefer dependency injection over facades
-- Use Eloquent's new methods and features in Laravel 10+
-
-### Vue 3.5 + InertiaJS Best Practices
-- Always use `<script setup>` with Composition API
-- Implement two-way binding with `defineModel()` + TypeScript
-- Type all props/data interfaces explicitly
-- Handle forms using Inertia's `useForm()`
-- Use Inertia's `router` for full-page navigations (form submissions, links) and `axios` for API endpoints that return JSON data without page reloads. 
-- Organize pages following Inertia's folder structure
-- Optimize with:
-  - `Lazy` components
-  - `v-once` for static content  
-  - `computed` for heavy logic
-- Extract reusable logic to composables
-- Enable `preserveState`/`preserveScroll` for page transitions
-- Handle errors in router callbacks
-- Use progress indicators for file uploads
-
-## 2. Project Structure
-
-### Directory Conventions
+### Backend
 ```
 app/
-  Actions/           # Single action classes (verb-named)
-  Console/           # Artisan commands
+  Actions/     # Single-purpose verb-named classes 
   Http/
-    Controllers/     # Slim controllers (no abstract/base)
-    Requests/        # FormRequest validation classes
-    Resources/       # API resources
-  Models/            # Eloquent models
-  Policies/          # Authorization policies
-  Providers/         # Service providers
+    Controllers/ # Slim controllers using Actions
+    Requests/    # FormRequest validation
+  Models/      # $guarded = [] instead of $fillable
 ```
 
-### Key Principles
-- Maintain existing structure - don't introduce new folders without approval
-- Keep controllers thin - delegate logic to Actions
-- Use FormRequest classes for validation (named Create/Update/Delete)
-- Avoid `$fillable` - use `$guarded = []` with proper validation instead
+- **PHP Standards**: 
+  - `declare(strict_types=1)` in all files
+  - PHP 8.4 features: typed props, match, readonly, constructor property promotion, first class callable syntax ¶
+  - `Model::query()` over `DB::` facade
+  - DI over facades
 
-## 3. Testing Standards
+- **Laravel Patterns**:
+  - FormRequests for validation
+  - Action classes for business logic
+  - SOLID principles
 
-### Pest PHP
-- Write all tests using Pest syntax
-- Follow AAA pattern (Arrange-Act-Assert)
-- Test coverage must exceed 90%
-- Never remove tests without approval
+### Frontend 
+- **Vue 3.5**: `<script setup>` + Composition API
+- **Component Strategy**: Shadcn/Vue with Tailwind
+- **Form Handling**: Inertia `useForm()` + TypeScript interfaces
+- **Navigation**: `router` for full-page, `axios` for API JSON
 
-### Test Structure
-```
-tests/
-  Feature/
-    Console/         # Command tests
-    Http/           # Controller tests
-    Pages/          # Inertia page tests
-  Unit/
-    Actions/        # Action class tests
-    Jobs/           # Job tests
-    Models/         # Model tests
-    Components/     # Vue component tests
-```
+## TDD Workflow
 
-### Testing Requirements
-- Generate factory for each model (`ModelFactory`)
-- Run `sail composer lint` after changes
-- Run `sail composer test` before finalizing work
-- All new code must have corresponding tests
+1. Write Pest test first (AAA pattern)
+2. Implement minimal code to pass test
+3. Refactor while keeping tests green
+4. Run `sail composer lint && sail composer test`
+5. Verify 90%+ coverage
 
-## 4. Frontend Standards
+## Example Pattern
 
-### UI Components
-- Use Shadcn/Vue components with proper composition
-- Follow accessibility best practices
-- Keep components small and focused
-
-### Styling
-- Use Tailwind CSS utility-first approach
-- Prefer functional over presentational components
-- Maintain minimal, clean UI design
-- Extract repeated styles to `@apply` directives when needed
-
-## 5. Development Workflow
-
-### Task Completion Checklist
-1. Write tests for new functionality
-2. Implement feature following standards
-3. Run static analysis (`sail composer lint`)
-4. Run tests (`sail composer test`)
-5. Recompile assets if frontend changes were made
-6. Verify all coding standards are met
-7. Remove any temporary files (including `.gitkeep`)
-
-### Code Review Requirements
-- No dependency changes without approval
-- Follow SOLID principles
-- Adhere to single responsibility principle
-- Keep methods small and focused
-- Document complex logic with clear comments
-
-## Example Implementation
-
-### Action Class
 ```php
-// app/Actions/CreateTodoAction.php
+// Test First (tests/Unit/Actions/CreateTodoActionTest.php)
+test('creates a todo for user', function () {
+    $user = User::factory()->create();
+    
+    $todo = (new CreateTodoAction())->handle($user, [
+        'title' => 'Test Todo',
+        'description' => 'Test description',
+    ]);
+    
+    expect($todo)
+        ->title->toBe('Test Todo')
+        ->user_id->toBe($user->id);
+});
+
+// Implementation (app/Actions/CreateTodoAction.php)
 declare(strict_types=1);
-
 namespace App\Actions;
-
 use App\Models\Todo;
 use App\Models\User;
 
@@ -133,15 +73,10 @@ class CreateTodoAction
         return $user->todos()->create($data);
     }
 }
-```
 
-### Controller
-```php
-// app/Http/Controllers/TodoController.php
+// Controller (app/Http/Controllers/TodoController.php) 
 declare(strict_types=1);
-
 namespace App\Http\Controllers;
-
 use App\Actions\CreateTodoAction;
 use App\Http\Requests\CreateTodoRequest;
 
@@ -150,52 +85,7 @@ class TodoController extends Controller
     public function store(CreateTodoRequest $request, CreateTodoAction $action)
     {
         $todo = $action->handle($request->user(), $request->validated());
-        
         return redirect()->route('todos.show', $todo);
     }
 }
-```
-
-### FormRequest
-```php
-// app/Http/Requests/CreateTodoRequest.php
-declare(strict_types=1);
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class CreateTodoRequest extends FormRequest
-{
-    public function rules(): array
-    {
-        return [
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'due_date' => ['nullable', 'date', 'after:today'],
-        ];
-    }
-}
-```
-
-### Pest Test
-```php
-// tests/Unit/Actions/CreateTodoActionTest.php
-use App\Actions\CreateTodoAction;
-use App\Models\User;
-
-test('creates a todo for user', function () {
-    $user = User::factory()->create();
-    $action = new CreateTodoAction();
-    
-    $todo = $action->handle($user, [
-        'title' => 'Test Todo',
-        'description' => 'Test description',
-    ]);
-    
-    expect($todo)
-        ->title->toBe('Test Todo')
-        ->description->toBe('Test description')
-        ->user_id->toBe($user->id);
-});
 ```
