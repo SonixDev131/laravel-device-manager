@@ -20,7 +20,7 @@ final class ComputerFactory extends Factory
             'ip_address' => $this->faker->ipv4(),
             'pos_row' => $this->faker->numberBetween(1, 10),
             'pos_col' => $this->faker->numberBetween(1, 10),
-            'is_online' => $this->faker->boolean(20), // 20% chance to be online
+            'active' => $this->faker->boolean(20), // 20% chance to be online
         ];
     }
 }

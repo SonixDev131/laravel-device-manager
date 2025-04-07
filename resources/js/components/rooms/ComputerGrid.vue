@@ -97,12 +97,7 @@ const roomInfo = computed(() => {
         <!-- Scrollable grid container with contained height -->
         <ScrollArea class="grid h-[calc(100vh-12rem)] place-content-center p-4">
             <div class="flex min-h-full items-center justify-center">
-                <div
-                    class="grid auto-rows-min gap-4 p-2"
-                    :style="{
-                        gridTemplateColumns: `repeat(${room.data.grid_cols}, minmax(80px, 1fr))`,
-                    }"
-                >
+                <div class="grid auto-rows-min gap-6" :style="{ gridTemplateColumns: `repeat(${room.data.grid_cols}, minmax(80px, 1fr))` }">
                     <!-- Iterate through each row in our computed grid -->
                     <template v-for="row in gridCells" :key="row[0].row">
                         <!-- Iterate through each cell in the current row -->
@@ -118,19 +113,21 @@ const roomInfo = computed(() => {
                                 @click="commandMode === 'selected' ? handleToggleSelection(cell.computer.id) : null"
                             />
 
-                            <!-- Improved empty cell with "+" button -->
-                            <div
-                                v-else
-                                :key="`empty-${cell.row}-${cell.col}`"
-                                class="group relative flex h-16 w-16 cursor-pointer select-none items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/20 bg-background/50 transition-all hover:border-muted-foreground/50 hover:bg-muted/20"
-                                @click="handleAddComputer(cell.row, cell.col)"
-                            >
+                            <!-- Improved empty cell with "+" button and additional height for consistency -->
+                            <div v-else :key="`empty-${cell.row}-${cell.col}`" class="flex flex-col items-center">
                                 <div
-                                    class="absolute flex h-full w-full items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                                    class="group relative flex h-16 w-16 cursor-pointer select-none items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/20 bg-background/50 transition-all hover:border-muted-foreground/50 hover:bg-muted/20"
+                                    @click="handleAddComputer(cell.row, cell.col)"
                                 >
-                                    <PlusIcon class="h-5 w-5 text-muted-foreground" />
+                                    <div
+                                        class="absolute flex h-full w-full items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                                    >
+                                        <PlusIcon class="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div class="text-xs text-muted-foreground/50 group-hover:opacity-0">{{ cell.row }},{{ cell.col }}</div>
                                 </div>
-                                <div class="text-xs text-muted-foreground/50 group-hover:opacity-0">{{ cell.row }},{{ cell.col }}</div>
+                                <!-- Empty space matching the height of the status indicator -->
+                                <div class="h-6"></div>
                             </div>
                         </template>
                     </template>

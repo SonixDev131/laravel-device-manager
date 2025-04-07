@@ -54,6 +54,7 @@ export interface Computer {
     created_at: string;
     updated_at: string;
     room_id: string;
+    active: boolean;
 }
 
 export interface RoomFormData {
