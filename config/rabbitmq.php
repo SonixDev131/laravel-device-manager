@@ -9,6 +9,8 @@ return [
     'password' => env('RABBITMQ_PASSWORD', 'guest'),
     'vhost' => env('RABBITMQ_VHOST', '/'),
     'timeout' => env('RABBITMQ_TIMEOUT', 10.0),
+
+    // Define exchanges in a more structured way
     'exchanges' => [
         'commands' => [
             'name' => 'unilab.commands',
@@ -16,11 +18,24 @@ return [
             'durable' => true,
             'auto_delete' => false,
         ],
-        'updates' => [
-            'name' => 'unilab.updates',
-            'type' => 'fanout',
+        'status' => [
+            'name' => 'unilab.status',
+            'type' => 'topic',
             'durable' => true,
             'auto_delete' => false,
         ],
+    ],
+
+    // Define queues
+    'queues' => [
+        'status' => 'status_updates',
+    ],
+
+    // Define routing keys for different message types
+    'routing_keys' => [
+        'commands' => 'command.room_{room}.computer_{computer}',
+        'room_broadcast' => 'command.room_{room}.broadcast',
+        'status' => 'status.#',
+        'updates' => 'updates.{os}.{version}',
     ],
 ];

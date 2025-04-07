@@ -1,7 +1,7 @@
 # Laravel + Vue + Inertia: TDD-First Development Standards
 
 ## Core Principles
-- **TDD-first**: Write tests before implementation (only for backend)
+- **TDD-first**: Write tests before implementation (only for backend laravel stuff)
 - **PHP 8.4**: Use strict types and modern features everywhere
 - **Thin Controllers**: Business logic in Action classes
 - **90%+ Test Coverage**: Required for all new code
