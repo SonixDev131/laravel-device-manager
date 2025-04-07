@@ -16,3 +16,13 @@ UniLab là một hệ thống quản lý phòng máy thực hành cho trường 
 ## Liên hệ
 
 Để biết thêm thông tin, vui lòng liên hệ: [email@example.com](mailto:email@example.com)
+
+---
+
+- Xác thực và phân quyền (admin)
+- Quản lý phòng máy (thêm, sửa, xóa phòng)
+- Quản lý máy tính (thêm, sửa, xóa máy tính trong phòng)
+- Xem danh sách máy tính đang hoạt động/không hoạt động
+- Gửi lệnh khởi động/tắt máy từ xa
+- Dashboard tổng quan trạng thái phòng máy
+- Giao diện quản lý phòng/máy (chỉ hỗ trợ desktop)

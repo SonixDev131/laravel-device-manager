@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use App\Models\Computer;
 use App\Models\Room;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 test('room has correct attributes', function () {
     $room = Room::factory()->create([
@@ -63,7 +65,7 @@ test('room computers relationship returns empty collection when no computers', f
     $room = Room::factory()->create();
 
     expect($room->computers)
-        ->toBeInstanceOf(Illuminate\Database\Eloquent\Collection::class)
+        ->toBeInstanceOf(Collection::class)
         ->toBeEmpty();
 });
 

@@ -2,7 +2,10 @@
     "preset": "laravel",
     "rules": {
         "declare_strict_types": true,
-        "fully_qualified_strict_types": true,
+        "fully_qualified_strict_types": {
+            "import_symbols": true,
+            "leading_backslash_in_global_namespace": true
+        },
         "global_namespace_import": {
             "import_classes": true,
             "import_constants": true,

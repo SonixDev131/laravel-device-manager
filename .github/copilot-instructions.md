@@ -1,7 +1,7 @@
 # Laravel + Vue + Inertia: TDD-First Development Standards
 
 ## Core Principles
-- **TDD-first**: Write tests before implementation
+- **TDD-first**: Write tests before implementation (only for backend)
 - **PHP 8.4**: Use strict types and modern features everywhere
 - **Thin Controllers**: Business logic in Action classes
 - **90%+ Test Coverage**: Required for all new code
@@ -20,7 +20,7 @@ app/
 
 - **PHP Standards**: 
   - `declare(strict_types=1)` in all files
-  - PHP 8.4 features: typed props, match, readonly, constructor property promotion, first class callable syntax ¶
+  - PHP 8.4 features: typed props, match, readonly, constructor property promotion, first class callable syntax
   - `Model::query()` over `DB::` facade
   - DI over facades
 

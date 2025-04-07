@@ -31,7 +31,7 @@ test('creates token with room id and stores in database', function () {
     $storedToken = InstallationToken::query()->where('token', $token)->first();
     expect($storedToken)->not->toBeNull();
     expect($storedToken->room_id)->toBe($room->id);
-    expect($storedToken->expires_at)->toBeInstanceOf(Carbon\Carbon::class);
+    expect($storedToken->expires_at)->toBeInstanceOf(\Carbon\Carbon::class);
 });
 
 test('throws exception when room does not exist', function () {

@@ -13,12 +13,12 @@ return new class extends Migration
         Schema::create('computers', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignUuid('room_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->text('name');
+            $table->text('name')->nullable();
             $table->string('mac_address', 25)->unique();
             $table->string('ip_address', 45)->nullable();
             $table->integer('pos_row');
             $table->integer('pos_col');
-            $table->boolean('is_online')->default(false);
+            $table->boolean('active')->default(false);
             $table->timestampsTz();
         });
     }
