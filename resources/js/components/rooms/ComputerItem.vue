@@ -47,7 +47,7 @@ const statusTextClass = computed(() => {
 
 // Status ring class bindings
 const statusRingClass = computed(() => {
-    const baseClasses = ['status-ring', 'absolute', 'inset-0', 'rounded', 'ring-1', 'ring-offset-1', 'transition-colors'];
+    const baseClasses = ['status-ring', 'absolute', 'inset-0', 'rounded', 'ring-4', 'ring-inset', 'transition-colors'];
 
     if (props.computer.active) {
         baseClasses.push('ring-green-500/50');
@@ -106,7 +106,7 @@ const computerClass = computed(() => {
         </div>
 
         <!-- Status indicator outside and below the computer box -->
-        <div class="status-indicator-container mt-1 flex items-center justify-center">
+        <div class="mt-1 flex items-center justify-center">
             <span :class="statusDotClass"></span>
             <span :class="statusTextClass">{{ statusText }}</span>
         </div>
