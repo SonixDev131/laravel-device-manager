@@ -4,83 +4,92 @@ declare(strict_types=1);
 
 namespace App\Services\RabbitMQ;
 
-use Illuminate\Contracts\Config\Repository;
-
 /**
- * RabbitMQ configuration implementation using Laravel config
+ * Configuration for RabbitMQ service
  */
-final readonly class RabbitMQConfig implements RabbitMQConfigInterface
+class RabbitMQConfig implements RabbitMQConfigInterface
 {
-    public function __construct(private Repository $config) {}
-
     /**
-     * Get the list of exchanges to declare
-     *
-     * @return array<Exchange>
+     * @var array<string, ExchangeConfig>
      */
-    public function getExchanges(): array
+    private array $exchanges = [];
+
+    public function __construct()
     {
-        return [
-            new Exchange(
-                name: $this->config->get('rabbitmq.exchanges.commands.name', 'unilab.commands'),
-                type: $this->config->get('rabbitmq.exchanges.commands.type', 'topic'),
-                durable: $this->config->get('rabbitmq.exchanges.commands.durable', true),
-                autoDelete: $this->config->get('rabbitmq.exchanges.commands.auto_delete', false)
+        // Initialize default exchanges
+        $this->exchanges = [
+            'commands' => new ExchangeConfig(
+                name: config('rabbitmq.exchanges.commands.name', 'commands'),
+                type: config('rabbitmq.exchanges.commands.type', 'topic'),
+                durable: config('rabbitmq.exchanges.commands.durable', true),
+                autoDelete: config('rabbitmq.exchanges.commands.auto_delete', false)
             ),
-            new Exchange(
-                name: $this->config->get('rabbitmq.exchanges.status.name', 'unilab.status'),
-                type: $this->config->get('rabbitmq.exchanges.status.type', 'topic'),
-                durable: $this->config->get('rabbitmq.exchanges.status.durable', true),
-                autoDelete: $this->config->get('rabbitmq.exchanges.status.auto_delete', false)
+            'status' => new ExchangeConfig(
+                name: config('rabbitmq.exchanges.status.name', 'status'),
+                type: config('rabbitmq.exchanges.status.type', 'topic'),
+                durable: config('rabbitmq.exchanges.status.durable', true),
+                autoDelete: config('rabbitmq.exchanges.status.auto_delete', false)
             ),
         ];
     }
 
     /**
-     * Get the exchange name for commands
+     * Get all configured exchanges
+     */
+    public function getExchanges(): array
+    {
+        return array_values($this->exchanges);
+    }
+
+    /**
+     * Get command exchange name
      */
     public function getCommandExchange(): string
     {
-        return $this->config->get('rabbitmq.exchanges.commands.name', 'unilab.commands');
+        return $this->exchanges['commands']->name;
     }
 
     /**
-     * Get the routing key pattern for computer commands
-     */
-    public function getCommandRoutingKey(): string
-    {
-        return $this->config->get('rabbitmq.routing_keys.commands', 'command.room_{room}.computer_{computer}');
-    }
-
-    /**
-     * Get the routing key pattern for room broadcast commands
-     */
-    public function getRoomBroadcastRoutingKey(): string
-    {
-        return $this->config->get('rabbitmq.routing_keys.room_broadcast', 'command.room_{room}.broadcast');
-    }
-
-    /**
-     * Get the exchange name for status updates
+     * Get status exchange name
      */
     public function getStatusExchange(): string
     {
-        return $this->config->get('rabbitmq.exchanges.status.name', 'unilab.status');
+        return $this->exchanges['status']->name;
     }
 
     /**
-     * Get the queue name for status updates
+     * Get command routing key pattern
+     * Default: room.{room}.computer.{computer}
      */
-    public function getStatusQueue(): string
+    public function getCommandRoutingKey(): string
     {
-        return $this->config->get('rabbitmq.queues.status', 'status_updates');
+        return config('rabbitmq.routing_keys.command', 'room.{room}.computer.{computer}');
     }
 
     /**
-     * Get the routing key pattern for status updates
+     * Get room broadcast routing key pattern
+     * Default: room.{room}.all
+     */
+    public function getRoomBroadcastRoutingKey(): string
+    {
+        return config('rabbitmq.routing_keys.room_broadcast', 'room.{room}.all');
+    }
+
+    /**
+     * Get status routing key
+     * Default: status.#
      */
     public function getStatusRoutingKey(): string
     {
-        return $this->config->get('rabbitmq.routing_keys.status', 'status.#');
+        return config('rabbitmq.routing_keys.status', 'status.#');
+    }
+
+    /**
+     * Get status queue name
+     * Default: status_queue
+     */
+    public function getStatusQueue(): string
+    {
+        return config('rabbitmq.queues.status', 'status_queue');
     }
 }

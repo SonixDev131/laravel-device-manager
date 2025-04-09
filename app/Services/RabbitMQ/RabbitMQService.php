@@ -24,7 +24,7 @@ final class RabbitMQService
             $this->setupExchanges();
         } catch (Exception $e) {
             Log::error('RabbitMQ connection error: '.$e->getMessage());
-            throw $e; // Let the caller handle it
+            throw $e;
         }
     }
 
@@ -36,127 +36,76 @@ final class RabbitMQService
     public function close(): void
     {
         try {
-            if ($this->channel) {
-                $this->channel->close();
-            }
-            if ($this->connection) {
-                $this->connection->close();
-            }
+            $this->channel?->close();
+            $this->connection?->close();
         } catch (Exception $e) {
             Log::warning('Failed to close RabbitMQ resources: '.$e->getMessage());
         }
     }
 
+    /**
+     * Send command to a specific computer
+     */
     public function sendCommandToComputer(
         string $computerId,
         string $roomId,
-        string $commandType,
-        array $options = [
-            'content_type' => 'application/json',
-            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-        ]): bool
+        string|array $command
+    ): bool {
+        // Format routing key for specific computer
+        $routingKey = strtr(
+            $this->config->getCommandRoutingKey(),
+            ['{room}' => $roomId, '{computer}' => $computerId]
+        );
+
+        return $this->publish(
+            $this->config->getCommandExchange(),
+            $routingKey,
+            $command
+        );
+    }
+
+    /**
+     * Send command to all computers in a room
+     */
+    public function sendCommandToRoom(string $roomId, string|array $command): bool
+    {
+        // Format routing key for room broadcast
+        $routingKey = strtr(
+            $this->config->getRoomBroadcastRoutingKey(),
+            ['{room}' => $roomId]
+        );
+
+        return $this->publish(
+            $this->config->getCommandExchange(),
+            $routingKey,
+            $command
+        );
+    }
+
+    /**
+     * Publish to a specific queue
+     */
+    public function publishToQueue(string $queueName, string|array $data): bool
     {
         try {
-            $routingKey = strtr(
-                $this->config->getCommandRoutingKey(),
-                [
-                    '{room}' => $roomId,
-                    '{computer}' => $computerId,
-                ]
-            );
-            $message = new AMQPMessage(
-                json_encode($commandType),
-                $options
-            );
-            $this->channel->basic_publish(
-                $message,
-                $this->config->getCommandExchange(),
-                $routingKey
-            );
-
-            return true;
-        } catch (Exception $e) {
-            Log::error('Failed to publish message', ['message' => $e->getMessage()]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Sends a command to all computers in a room
-     */
-    public function sendCommandToRoom(
-        string $roomId,
-        array $command,
-        array $options = [
-            'content_type' => 'application/json',
-            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-        ]
-    ): bool {
-        try {
-            $routingKey = strtr(
-                $this->config->getRoomBroadcastRoutingKey(),
-                [
-                    '{room}' => $roomId,
-                ]
-            );
-
-            $message = new AMQPMessage(
-                json_encode($command),
-                $options
-            );
-
-            $this->channel->basic_publish(
-                $message,
-                $this->config->getCommandExchange(),
-                $routingKey
-            );
-
-            return true;
-        } catch (Exception $e) {
-            Log::error('Failed to publish message', ['message' => $e->getMessage()]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Publishes a message to a specific queue
-     */
-    public function publishToQueue(
-        string $queueName,
-        array $data,
-        array $options = [
-            'content_type' => 'application/json',
-            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-        ]
-    ): bool {
-        try {
-            // Declare the queue to ensure it exists
+            // Ensure queue exists
             $this->channel->queue_declare(
-                $queueName,      // queue name
-                false,           // passive
-                true,            // durable
-                false,           // exclusive
-                false            // auto_delete
+                $queueName,
+                false,  // passive
+                true,   // durable
+                false,  // exclusive
+                false   // auto_delete
             );
 
-            $message = new AMQPMessage(
-                json_encode($data),
-                $options
-            );
-
-            $this->channel->basic_publish(
-                $message,
+            return $this->publish(
                 $this->config->getCommandExchange(),
-                $queueName
+                $queueName,
+                $data
             );
-
-            return true;
         } catch (Exception $e) {
-            Log::error('Failed to publish message to queue', [
+            Log::error('Failed to publish to queue', [
                 'queue' => $queueName,
-                'error' => $e->getMessage(),
+                'error' => $e->getMessage()
             ]);
 
             return false;
@@ -164,84 +113,44 @@ final class RabbitMQService
     }
 
     /**
-     * Consumes status update messages from agents
-     * Updates computer status in the database
+     * Consume status update messages from agents
      */
     public function consumeStatusUpdates(int $messageLimit = 0): bool
     {
         try {
-            // Declare status queue
+            // Set up the status queue
             $queueName = $this->config->getStatusQueue();
             $this->channel->queue_declare(
-                $queueName,      // queue
-                false,           // passive
-                true,            // durable
-                false,           // exclusive
-                false            // auto_delete
+                $queueName,
+                false,  // passive
+                true,   // durable
+                false,  // exclusive
+                false   // auto_delete
             );
 
-            // Bind the queue to the exchange with the routing key
+            // Bind queue to exchange
             $this->channel->queue_bind(
                 $queueName,
                 $this->config->getStatusExchange(),
                 $this->config->getStatusRoutingKey()
             );
 
-            // Set up the consumer
+            // Process messages
             $messageCount = 0;
             $this->channel->basic_consume(
                 $queueName,
-                '',             // consumer tag
-                false,          // no local
-                false,          // no ack
-                false,          // exclusive
-                false,          // no wait
-                function (AMQPMessage $message) use (&$messageCount, $messageLimit) {
-                    // Process the message
-                    $data = json_decode($message->getBody(), true);
-
-                    Log::info('Received status update from agent', [
-                        'computer_id' => $data['computer_id'] ?? 'unknown',
-                        'status' => $data['status'] ?? 'unknown',
-                    ]);
-
-                    // Update computer status in the database if the data is valid
-                    if (isset($data['computer_id'], $data['status'])) {
-                        try {
-                            $computer = Computer::firstWhere('uuid', $data['computer_id']);
-
-                            if ($computer) {
-                                $computer->update([
-                                    'status' => $data['status'],
-                                    'last_seen_at' => now(),
-                                ]);
-                            }
-                        } catch (Exception $e) {
-                            // In test environments, this might fail due to missing DB connection
-                            Log::warning('Failed to update computer status: '.$e->getMessage());
-                        }
-                    }
-
-                    // Acknowledge the message
-                    $message->ack();
-
-                    // Increment message count
-                    $messageCount++;
-
-                    // Stop consuming after the limit is reached
-                    if ($messageLimit > 0 && $messageCount >= $messageLimit) {
-                        return false;
-                    }
-
-                    return true;
-                }
+                '',      // consumer tag
+                false,   // no local
+                false,   // no ack
+                false,   // exclusive
+                false,   // no wait
+                $this->createMessageHandler($messageCount, $messageLimit)
             );
 
-            // Wait for messages until the limit is reached
+            // Wait for messages until limit reached
             while ($messageLimit <= 0 || $messageCount < $messageLimit) {
                 $this->channel->wait();
 
-                // For tests with message limits, we can break after processing the expected messages
                 if ($messageLimit > 0 && $messageCount >= $messageLimit) {
                     break;
                 }
@@ -255,16 +164,101 @@ final class RabbitMQService
         }
     }
 
+    /**
+     * Core publish method - handles the common publishing logic
+     */
+    private function publish(string $exchange, string $routingKey, string|array $data): bool
+    {
+        try {
+            // Prepare message content
+            $messageContent = is_array($data) ? json_encode($data) : $data;
+
+            // Create and publish message
+            $message = new AMQPMessage(
+                $messageContent,
+                [
+                    'content_type' => 'application/json',
+                    'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
+                ]
+            );
+
+            $this->channel->basic_publish(
+                $message,
+                $exchange,
+                $routingKey
+            );
+
+            return true;
+        } catch (Exception $e) {
+            Log::error('Failed to publish message', [
+                'exchange' => $exchange,
+                'routing_key' => $routingKey,
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Create a message handler for consuming status updates
+     */
+    private function createMessageHandler(int &$messageCount, int $messageLimit): callable
+    {
+        return function (AMQPMessage $message) use (&$messageCount, $messageLimit) {
+            // Process the message
+            $data = json_decode($message->getBody(), true);
+
+            Log::info('Received status update from agent', [
+                'computer_id' => $data['computer_id'] ?? 'unknown',
+                'status' => $data['status'] ?? 'unknown',
+            ]);
+
+            // Update computer status if data is valid
+            if (isset($data['computer_id'], $data['status'])) {
+                $this->updateComputerStatus($data);
+            }
+
+            // Acknowledge the message
+            $message->ack();
+            $messageCount++;
+
+            // Stop consuming after limit reached
+            return $messageLimit <= 0 || $messageCount < $messageLimit;
+        };
+    }
+
+    /**
+     * Update computer status in database
+     */
+    private function updateComputerStatus(array $data): void
+    {
+        try {
+            $computer = Computer::firstWhere('uuid', $data['computer_id']);
+
+            if ($computer) {
+                $computer->update([
+                    'status' => $data['status'],
+                    'last_seen_at' => now(),
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::warning('Failed to update computer status: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Set up required exchanges
+     */
     private function setupExchanges(): void
     {
-        // Declare exchanges
         foreach ($this->config->getExchanges() as $exchange) {
             $this->channel->exchange_declare(
-                $exchange->name,        // exchange name
-                $exchange->type,        // type
-                false,                  // passive
-                $exchange->durable,     // durable
-                $exchange->autoDelete   // auto_delete
+                $exchange->name,
+                $exchange->type,
+                false,               // passive
+                $exchange->durable,
+                $exchange->autoDelete
             );
         }
     }

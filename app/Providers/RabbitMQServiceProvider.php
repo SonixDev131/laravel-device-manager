@@ -14,47 +14,37 @@ class RabbitMQServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Register RabbitMQConfig as implementation of RabbitMQConfigInterface
-        $this->app->singleton(
-            RabbitMQConfigInterface::class,
-            RabbitMQConfig::class
-        );
+        // Register RabbitMQ Config
+        $this->app->singleton(RabbitMQConfigInterface::class, function () {
+            return new RabbitMQConfig();
+        });
 
         // Register AMQPStreamConnection
-        $this->app->singleton(
-            AMQPStreamConnection::class,
-            function ($app) {
-                return new AMQPStreamConnection(
-                    $app['config']->get('rabbitmq.host'),
-                    $app['config']->get('rabbitmq.port'),
-                    $app['config']->get('rabbitmq.user'),
-                    $app['config']->get('rabbitmq.password'),
-                    $app['config']->get('rabbitmq.vhost'),
-                    false,
-                    'AMQPLAIN',
-                    null,
-                    'en_US',
-                    $app['config']->get('rabbitmq.timeout'),
-                    $app['config']->get('rabbitmq.timeout'),
-                    null,
-                    false,
-                    30
-                );
-            });
+        $this->app->singleton(AMQPStreamConnection::class, function () {
+            return new AMQPStreamConnection(
+                host: config('rabbitmq.host', 'localhost'),
+                port: (int)config('rabbitmq.port', 5672),
+                user: config('rabbitmq.user', 'guest'),
+                password: config('rabbitmq.password', 'guest'),
+                vhost: config('rabbitmq.vhost', '/'),
+                insist: false,
+                login_method: 'AMQPLAIN',
+                login_response: null,
+                locale: 'en_US',
+                connection_timeout: (float)config('rabbitmq.connection_timeout', 3.0),
+                read_write_timeout: (float)config('rabbitmq.read_write_timeout', 3.0),
+                context: null,
+                keepalive: false,
+                heartbeat: (int)config('rabbitmq.heartbeat', 0)
+            );
+        });
 
         // Register RabbitMQService
-        $this->app->singleton(
-            RabbitMQService::class,
-            function ($app) {
-                return new RabbitMQService(
-                    $app->make(AMQPStreamConnection::class),
-                    $app->make(RabbitMQConfigInterface::class)
-                );
-            });
-    }
-
-    public function boot(): void
-    {
-        //
+        $this->app->singleton(RabbitMQService::class, function ($app) {
+            return new RabbitMQService(
+                $app->make(AMQPStreamConnection::class),
+                $app->make(RabbitMQConfigInterface::class)
+            );
+        });
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions;
 
-use App\Services\RabbitMQService;
+use App\Services\RabbitMQ\RabbitMQService;
 
 final class PublishComputerCommandAction
 {

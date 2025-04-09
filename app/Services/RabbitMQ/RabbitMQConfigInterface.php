@@ -10,39 +10,41 @@ namespace App\Services\RabbitMQ;
 interface RabbitMQConfigInterface
 {
     /**
-     * Get all exchange configurations
+     * Get exchanges configuration
      *
-     * @return array<Exchange>
+     * @return array<ExchangeConfig>
      */
     public function getExchanges(): array;
 
     /**
-     * Get the command exchange name
+     * Get command exchange name
      */
     public function getCommandExchange(): string;
 
     /**
-     * Get the status exchange name
+     * Get status exchange name
      */
     public function getStatusExchange(): string;
 
     /**
-     * Get the command routing key pattern
+     * Get command routing key pattern
+     * Should contain placeholders like {room}, {computer}
      */
     public function getCommandRoutingKey(): string;
 
     /**
-     * Get the room broadcast routing key pattern
+     * Get room broadcast routing key pattern
+     * Should contain placeholder like {room}
      */
     public function getRoomBroadcastRoutingKey(): string;
 
     /**
-     * Get the status routing key pattern
+     * Get status routing key
      */
     public function getStatusRoutingKey(): string;
 
     /**
-     * Get the status queue name
+     * Get status queue name
      */
     public function getStatusQueue(): string;
 }
