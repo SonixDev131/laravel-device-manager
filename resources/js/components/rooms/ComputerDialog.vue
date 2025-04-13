@@ -92,7 +92,7 @@ const onSubmit = () => {
         form.name = suggestedName.value;
     }
 
-    form.post(route('computers.store', props.roomId), {
+    form.post(route('rooms.computers.store', props.roomId), {
         onSuccess: () => {
             isOpen.value = false;
             emit('submit', form);

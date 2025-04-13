@@ -3,39 +3,73 @@
 declare(strict_types=1);
 
 return [
-    'host' => env('RABBITMQ_HOST', 'localhost'),
-    'port' => env('RABBITMQ_PORT', 5672),
-    'user' => env('RABBITMQ_USER', 'guest'),
-    'password' => env('RABBITMQ_PASSWORD', 'guest'),
-    'vhost' => env('RABBITMQ_VHOST', '/'),
-    'timeout' => env('RABBITMQ_TIMEOUT', 10.0),
+    /*
+    |--------------------------------------------------------------------------
+    | RabbitMQ Connection Settings
+    |--------------------------------------------------------------------------
+    */
+    'connection' => [
+        'host' => env('RABBITMQ_HOST', 'localhost'),
+        'port' => (int) env('RABBITMQ_PORT', 5672),
+        'user' => env('RABBITMQ_USER', 'guest'),
+        'password' => env('RABBITMQ_PASSWORD', 'guest'),
+        'vhost' => env('RABBITMQ_VHOST', '/'),
+    ],
 
-    // Define exchanges in a more structured way
+    /*
+    |--------------------------------------------------------------------------
+    | RabbitMQ Exchanges Configuration
+    |--------------------------------------------------------------------------
+    | Define all exchanges used by the application.
+    */
     'exchanges' => [
         'commands' => [
             'name' => 'unilab.commands',
-            'type' => 'topic',
+            'type' => 'topic', // e.g., direct, topic, fanout, headers
             'durable' => true,
             'auto_delete' => false,
+            'passive' => false, // Add passive flag if needed
         ],
         'status' => [
             'name' => 'unilab.status',
             'type' => 'topic',
             'durable' => true,
             'auto_delete' => false,
+            'passive' => false,
         ],
     ],
 
-    // Define queues
+    /*
+    |--------------------------------------------------------------------------
+    | RabbitMQ Queues Configuration
+    |--------------------------------------------------------------------------
+    | Define all queues used by the application.
+    */
     'queues' => [
-        'status' => 'status_updates',
+        'computer_status' => 'unilab.computer.status',
+        'computer_commands' => 'unilab.computer.commands',
+        // Add other queues as needed
     ],
 
-    // Define routing keys for different message types
+    /*
+    |--------------------------------------------------------------------------
+    | RabbitMQ Routing Keys Configuration
+    |--------------------------------------------------------------------------
+    | Define routing key patterns.
+    */
     'routing_keys' => [
-        'commands' => 'command.room_{room}.computer_{computer}',
-        'room_broadcast' => 'command.room_{room}.broadcast',
-        'status' => 'status.#',
-        'updates' => 'updates.{os}.{version}',
+        'command_computer' => 'room.{room}.computer.{computer}',
+        'command_room_broadcast' => 'room.{room}.all',
+        'status_updates' => 'status.#',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Consumer Settings
+    |--------------------------------------------------------------------------
+    */
+    'consumer' => [
+        'prefetch_count' => (int) env('RABBITMQ_PREFETCH_COUNT', 10),
+        'timeout' => (int) env('RABBITMQ_TIMEOUT', 0), // 0 means wait indefinitely
     ],
 ];

@@ -184,3 +184,34 @@ sequenceDiagram
         A->>A: Skip update
     end
 ```
+
+# Development Workflows
+
+## Task Documentation Process
+
+### Creating a Changelog
+
+After completing a task, you must document all changes in a changelog file. To create a new changelog:
+
+1. Run the Artisan command:
+```bash
+php artisan make:changelog
+```
+
+2. Follow the prompts to enter:
+   - Task ID (Jira/Github issue number)
+   - Your name
+
+The command will generate a new markdown file in `docs/changelogs/` using the template.
+
+### Changelog Requirements
+
+Your changelog must include:
+- List of all modified files with change descriptions
+- New features or changes implemented
+- Database changes (if any)
+- Testing coverage
+- Performance and security considerations
+- Deployment steps and rollback plan
+
+The changelog serves as documentation for code review and future reference.

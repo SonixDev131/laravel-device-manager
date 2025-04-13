@@ -20,7 +20,7 @@ const { isSelectable = true } = props;
 const statusDotClass = computed(() => {
     const baseClasses = ['status-dot', 'h-2', 'w-2', 'rounded-full', 'inline-block', 'mr-1.5'];
 
-    if (props.computer.active) {
+    if (props.computer.status == 'online') {
         baseClasses.push('bg-green-500', 'animate-pulse');
     } else {
         baseClasses.push('bg-gray-300');
@@ -30,13 +30,13 @@ const statusDotClass = computed(() => {
 });
 
 const statusText = computed(() => {
-    return props.computer.active ? 'Online' : 'Offline';
+    return props.computer.status == 'online' ? 'Online' : 'Offline';
 });
 
 const statusTextClass = computed(() => {
     const baseClasses = ['status-text', 'text-xs', 'font-medium'];
 
-    if (props.computer.active) {
+    if (props.computer.status == 'online') {
         baseClasses.push('text-green-600');
     } else {
         baseClasses.push('text-gray-500');
@@ -49,7 +49,7 @@ const statusTextClass = computed(() => {
 const statusRingClass = computed(() => {
     const baseClasses = ['status-ring', 'absolute', 'inset-0', 'rounded', 'ring-4', 'ring-inset', 'transition-colors'];
 
-    if (props.computer.active) {
+    if (props.computer.status == 'online') {
         baseClasses.push('ring-green-500/50');
     } else {
         baseClasses.push('ring-gray-300/30');

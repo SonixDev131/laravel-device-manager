@@ -4,92 +4,91 @@ declare(strict_types=1);
 
 namespace App\Services\RabbitMQ;
 
+use Illuminate\Support\Facades\Config;
+
+ // Use Facade for cleaner access
+
 /**
- * Configuration for RabbitMQ service
+ * Configuration accessor for RabbitMQ service based on config/rabbitmq.php
  */
 class RabbitMQConfig implements RabbitMQConfigInterface
 {
     /**
-     * @var array<string, ExchangeConfig>
-     */
-    private array $exchanges = [];
-
-    public function __construct()
-    {
-        // Initialize default exchanges
-        $this->exchanges = [
-            'commands' => new ExchangeConfig(
-                name: config('rabbitmq.exchanges.commands.name', 'commands'),
-                type: config('rabbitmq.exchanges.commands.type', 'topic'),
-                durable: config('rabbitmq.exchanges.commands.durable', true),
-                autoDelete: config('rabbitmq.exchanges.commands.auto_delete', false)
-            ),
-            'status' => new ExchangeConfig(
-                name: config('rabbitmq.exchanges.status.name', 'status'),
-                type: config('rabbitmq.exchanges.status.type', 'topic'),
-                durable: config('rabbitmq.exchanges.status.durable', true),
-                autoDelete: config('rabbitmq.exchanges.status.auto_delete', false)
-            ),
-        ];
-    }
-
-    /**
-     * Get all configured exchanges
+     * Get all configured exchanges as ExchangeConfig objects.
+     *
+     * @return array<int, ExchangeConfig>
      */
     public function getExchanges(): array
     {
-        return array_values($this->exchanges);
+        /** @var array<string, array{name: string, type: string, durable: bool, auto_delete: bool, passive: bool}> $exchangesConfig */
+        $exchangesConfig = Config::get('rabbitmq.exchanges', []);
+
+        $exchanges = [];
+        foreach ($exchangesConfig as $config) {
+            $exchanges[] = new ExchangeConfig(
+                name: $config['name'],
+                type: $config['type'],
+                durable: $config['durable'],
+                autoDelete: $config['auto_delete']
+                // passive: $config['passive'] // Add if needed in ExchangeConfig
+            );
+        }
+
+        return $exchanges;
     }
 
     /**
-     * Get command exchange name
+     * Get command exchange name.
      */
     public function getCommandExchange(): string
     {
-        return $this->exchanges['commands']->name;
+        return Config::get('rabbitmq.exchanges.commands.name', '');
     }
 
     /**
-     * Get status exchange name
+     * Get status exchange name.
      */
     public function getStatusExchange(): string
     {
-        return $this->exchanges['status']->name;
+        return Config::get('rabbitmq.exchanges.status.name', '');
     }
 
     /**
-     * Get command routing key pattern
-     * Default: room.{room}.computer.{computer}
+     * Get command routing key pattern for specific computer.
      */
     public function getCommandRoutingKey(): string
     {
-        return config('rabbitmq.routing_keys.command', 'room.{room}.computer.{computer}');
+        return Config::get('rabbitmq.routing_keys.command_computer', '');
     }
 
     /**
-     * Get room broadcast routing key pattern
-     * Default: room.{room}.all
+     * Get room broadcast routing key pattern.
      */
     public function getRoomBroadcastRoutingKey(): string
     {
-        return config('rabbitmq.routing_keys.room_broadcast', 'room.{room}.all');
+        return Config::get('rabbitmq.routing_keys.command_room_broadcast', '');
     }
 
     /**
-     * Get status routing key
-     * Default: status.#
+     * Get status routing key pattern.
      */
     public function getStatusRoutingKey(): string
     {
-        return config('rabbitmq.routing_keys.status', 'status.#');
+        return Config::get('rabbitmq.routing_keys.status_updates', '');
     }
 
     /**
-     * Get status queue name
-     * Default: status_queue
+     * Get status queue name.
      */
     public function getStatusQueue(): string
     {
-        return config('rabbitmq.queues.status', 'status_queue');
+        return Config::get('rabbitmq.queues.computer_status', '');
+    }
+
+    // Add methods for other config values if needed (e.g., connection details)
+    public function getConnectionConfig(): array
+    {
+        /** @var array{host: string, port: int, user: string, password: string, vhost: string} */
+        return Config::get('rabbitmq.connection', []);
     }
 }

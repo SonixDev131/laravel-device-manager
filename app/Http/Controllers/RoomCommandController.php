@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\PublishComputerCommandAction;
 use App\Http\Requests\PublishComputerCommandRequest;
 use App\Models\Room;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 
@@ -45,7 +46,7 @@ final class RoomCommandController extends Controller
 
             return to_route('rooms.show', $room->id)
                 ->with('error', 'Failed to send command. Please try again later.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to publish command via RabbitMQ', [
                 'room_id' => $room->id,
                 'command_type' => $commandType,
@@ -73,6 +74,6 @@ final class RoomCommandController extends Controller
         );
 
         // Consider the operation successful if at least one message was sent successfully
-        return !empty(array_filter($results));
+        return ! empty(array_filter($results));
     }
 }

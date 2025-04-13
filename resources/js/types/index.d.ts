@@ -45,16 +45,40 @@ export interface Room {
     updated_at: string;
 }
 
+// Computer interfaces and types
+
 export interface Computer {
     id: string;
     name: string;
     mac_address: string;
+    ip_address?: string;
     pos_row: number;
     pos_col: number;
     created_at: string;
     updated_at: string;
+    last_seen_at?: string;
     room_id: string;
-    active: boolean;
+    status: ComputerStatus;
+    system_metrics?: SystemMetrics;
+}
+
+export interface SystemMetrics {
+    cpu_usage?: number;
+    memory_usage?: number;
+    disk_usage?: number;
+    uptime?: number;
+    platform?: string;
+    platform_version?: string;
+    hostname?: string;
+    [key: string]: any; // Allow for additional metrics
+}
+
+export enum ComputerStatus {
+    ONLINE = 'online',
+    OFFLINE = 'offline',
+    SHUTTING_DOWN = 'shutting_down',
+    IDLE = 'idle',
+    MAINTENANCE = 'maintenance',
 }
 
 export interface RoomFormData {

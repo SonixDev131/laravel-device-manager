@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\InstallationToken;
 use App\Models\Room;
 use App\Services\Installation\InstallationTokenService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,7 +32,7 @@ test('creates token with room id and stores in database', function () {
     $storedToken = InstallationToken::query()->where('token', $token)->first();
     expect($storedToken)->not->toBeNull();
     expect($storedToken->room_id)->toBe($room->id);
-    expect($storedToken->expires_at)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($storedToken->expires_at)->toBeInstanceOf(Carbon::class);
 });
 
 test('throws exception when room does not exist', function () {

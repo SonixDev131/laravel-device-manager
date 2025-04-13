@@ -14,6 +14,5 @@ class ExchangeConfig
         public readonly string $type, // direct, topic, fanout, headers
         public readonly bool $durable = true,
         public readonly bool $autoDelete = false
-    ) {
-    }
+    ) {}
 }

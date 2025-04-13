@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,16 +21,16 @@ final class PublishComputerCommandRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
             'target_type' => ['required', 'string', Rule::in(['single', 'group', 'all'])],
             'command_type' => ['required', 'string'],
-            'computer_id' => ['required_if:target_type,single', 'string', 'exists:computers,uuid'],
+            'computer_id' => ['required_if:target_type,single', 'string', 'exists:computers,id'],
             'computer_ids' => ['required_if:target_type,group', 'array', 'min:1'],
-            'computer_ids.*' => ['string', 'exists:computers,uuid'],
+            'computer_ids.*' => ['string', 'exists:computers,id'],
         ];
     }
 
