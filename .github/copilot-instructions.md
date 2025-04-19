@@ -1,137 +1,82 @@
-# Laravel + Vue Development Standards
+# Laravel + Vue Development Standards (Condensed)
 
-You are a Senior Fullstack Developer and an Expert in Laravel, InertiaJS, Vue.js, TypeScript, TailwindCSS, Shadcn, Radix.
+## Core Principles
+- **Strict Typing**: PHP 8.4 + TypeScript everywhere
+- **Consistency**: Follow Laravel/Vue conventions rigidly
+- **Test-First**: PEST coverage required
+- **Minimalist UI**: Tailwind + Shadcn/Vue
 
-## 2. Coding Standards
+## Backend Standards
+1. **Structure**:
+   - `Controllers`: Plural names (UsersController)
+   - `Requests`: Create/Update/Delete verbs
+   - `Actions`: Business logic handlers
+   - `Models`: No fillable, use query() not DB facade
 
-### 2.1 General Standards
-- Utilize the latest PHP v8.4 features.
-- Adhere to coding standards defined in `pint.json`.
-- Enforce strict type safety, including `array` shapes using PHPStan.
-- Document all changes in a markdown file after task completion, including:
-  - Files modified
-  - New features or changes implemented
-  - Database changes (if any)
-  - Testing coverage
-  - Potential impacts on other parts of the system
+2. **Code Quality**:
+   - PHPStan level 8
+   - PEST tests for all features
+   - Model factories required
+   - No direct DB calls
 
-### 2.2 Naming Conventions
-- Use consistent naming conventions for folders, classes, and files.
-- Follow Laravel's conventions: singular for models, plural for controllers (e.g., `User.php`, `UsersController.php`).
-- Use PascalCase for class names, camelCase for method names, and snake_case for database columns.
+3. **Architecture**:
+   ```php
+   // Controller example
+   public function store(CreateTodoRequest $request, CreateTodoAction $action)
+   {
+       $action->handle($request->user(), $request->validated());
+   }
+   ```
 
-### 2.3 Type Declarations
-- Always use explicit return type declarations for methods and functions.
-- Use appropriate PHP type hints for method parameters.
-- Leverage PHP 8.1+ features like union types and nullable types when necessary.
+## Frontend Standards
+1. **Components**:
+   ```vue
+   <script setup lang="ts">
+   // 1. Imports
+   // 2. Typed props/emits
+   // 3. Reactive state
+   // 4. Methods (arrow functions)
+   </script>
+   ```
 
-### 2.4 Data Type Consistency
-- Be consistent and explicit with data type declarations throughout the codebase.
-- Use type hints for properties, method parameters, and return types.
-- Leverage PHP's strict typing to catch type-related errors early.
+2. **TypeScript**:
+   - Strict typing for props/emits/refs
+    ```js
+    // 3.3+: alternative, more succinct syntax
+    const emit = defineEmits<{
+        change: [id: number]
+        update: [value: string]
+    }>()
+    ```
+   - Dedicated type files
+   - No `any` - use `unknown` if needed
+   - Composition API only
 
-## 3. Project Structure & Architecture
+3. **UI**:
+   - Shadcn/Vue components
+   - Tailwind utilities only
+   - Minimal design
 
-- Follow the existing project structure; do not create additional folders.
-- Do not use the `DB::` facade directly—always use `Model::query()`.
-- Do not add, update, or delete dependencies without prior approval.
+## Workflow Requirements
+1. Pre-commit:
+   - `composer lint`
+   - `composer test`
+   - Rebuild assets if FE changes
 
-### 3.1 Directory Conventions
+2. Documentation:
+   - Track all changes in markdown
+   - Include:
+     - Modified files
+     - DB changes
+     - Test coverage
+     - Impact analysis
 
-#### `app/Http/Controllers` - Controllers
-- Do not use abstract `Controller.php` or any base controller.
+## Security/Performance
+- FormRequest validation
+- Policy-based auth
+- Eager loading
+- Pagination
+- Queue long tasks
+- Cache expensive ops
 
-#### `app/Http/Requests` - Form Requests
-- Always use FormRequest for validation.
-- Use `Create`, `Update`, and `Delete` verbs in naming.
-
-#### `app/Actions` - Business Logic
-- Follow the Actions pattern.
-- Use `Create`, `Update`, and `Delete` verbs in naming.
-- Example Implementation:
-
-```php
-public function store(CreateTodoRequest $request, CreateTodoAction $action)
-{
-    /** @var User $user */
-    $user = $request->user();
-
-    $action->handle($user, $request->validated());
-    
-    // ...
-}
-```
-
-#### `app/Models` - Eloquent Models
-- Do not use `fillable` in models.
-
-## 4. Testing
-
-- All tests must be written using PEST PHP.
-- Run `composer lint` after creating or modifying a file.
-- Run `composer test` before finalizing any changes to ensure tests pass.
-- Always confirm with approval before removing a test.
-- Ensure all new code is covered by tests.
-- When creating models, always generate a `{Model}Factory`.
-
-### 4.1 Test Directory Structure
-
-- Commands: `tests/Feature/Console`
-- Controllers: `tests/Feature/Http`
-- Actions: `tests/Unit/Actions`
-- Models: `tests/Unit/Models`
-- Jobs: `tests/Unit/Jobs`
-
-## 5. Styling & UI
-
-- Tailwind CSS must be used for styling.
-- Maintain a minimal UI design.
-
-## 6. Task Completion Requirements
-
-- Recompile assets after making frontend-related changes.
-- Ensure compliance with all above guidelines before marking a task as complete.
-
-## 7. Frontend (Vue/TypeScript)
-
-### 7.1 Component Structure
-- Use `<script setup lang="ts">` + Composition API exclusively
-- Follow consistent organization pattern:
-  1. Imports (grouped by source)
-  2. Props/Emits with TypeScript interfaces
-  3. State declarations
-  4. Computed properties
-  5. Methods (use arrow functions)
-  6. Lifecycle hooks
-- Use Shadcn/Vue with Tailwind for consistent UI
-- TypeScript for all props, events, refs and state
-
-### 7.2 Vue/TypeScript Standards
-- Use `defineProps<{...}>()` over runtime declarations
-- Use `defineEmit` with more succinct syntax:
-
-```typescript
-const emit = defineEmits<{
-  change: [id: number] // named tuple syntax
-  update: [value: string]
-}>()
-```
-
-- Create dedicated type files in `resources/js/types/`
-- Type refs properly: `ref<string>('')` or let TypeScript infer
-- Type event handlers: `const handleClick = (): void => {...}`
-- For nullable values: `ref<string | null>(null)`
-- Type template refs: `ref<HTMLElement | null>(null)`
-- Use interfaces for complex structures
-- Avoid `any` - use `unknown` when type is uncertain
-- Component Strategy: Shadcn/Vue with Tailwind
-- Form Handling: Inertia `useForm()` + TypeScript interfaces
-- Navigation: `router` for full-page, `axios` for API JSON
-
-## 8. Security & Performance
-- Validate all user inputs with FormRequests
-- Implement proper authorization with Policies
-- Use eager loading for Eloquent relationships
-- Apply pagination for large datasets
-- Use Laravel queues for long-running tasks
-- Leverage caching for expensive operations
+Key: **Type everything, test everything, keep it simple** 🚀

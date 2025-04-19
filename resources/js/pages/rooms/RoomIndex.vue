@@ -1,18 +1,39 @@
 <script setup lang="ts">
-import RoomCard from '@/components/rooms/RoomCard.vue';
+// 1. Imports
 import RoomDialog from '@/components/rooms/RoomDialog.vue';
+import RoomEmptyState from '@/components/rooms/RoomEmptyState.vue';
+import RoomGrid from '@/components/rooms/RoomGrid.vue';
+import RoomImportDialog from '@/components/rooms/RoomImportDialog.vue';
+import RoomSearch from '@/components/rooms/RoomSearch.vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { useRoomDialogs } from '@/composables/useRoomDialogs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { useRoomStore } from '@/stores/room';
-import { Room, type BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, Room } from '@/types';
+import { FormDataConvertible } from '@inertiajs/core';
 import { Head, router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { AlertCircle, FolderOpen, Loader2, PlusCircle, Search } from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { AlertCircle, ArrowUpCircle, Loader2, PlusCircle } from 'lucide-vue-next';
+import { ref } from 'vue';
 
+// 2. Props/Emits definition
+interface Props {
+    rooms: {
+        data: Room[];
+    };
+}
+
+const props = defineProps<Props>();
+
+// 3. Reactive state
+// UI state
+const { toast } = useToast();
+const isLoading = ref<boolean>(false);
+const error = ref<string | null>(null);
+const searchQuery = ref<string>('');
+const isImportDialogOpen = ref<boolean>(false);
+
+// Navigation
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Rooms',
@@ -20,76 +41,114 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Props definition with TypeScript typing
-const props = defineProps<{
-    rooms: { data: Room[] };
-}>();
+// Dialog state from composable
+const { currentRoom, isEditMode, dialogOpen, openCreateDialog, openEditDialog, openDeleteDialog } = useRoomDialogs();
 
-// Store initialization
-const roomStore = useRoomStore();
+// 4. Methods
+// Room CRUD operations
+const createRoom = (roomData: Partial<Room>): void => {
+    isLoading.value = true;
+    error.value = null;
 
-const { isLoading, error, currentRoom, isCreateDialogOpen, isEditDialogOpen, isDeleteDialogOpen, isEditMode } = storeToRefs(roomStore);
+    // Create a FormData compatible object from roomData
+    const formData = { ...roomData } as Record<string, FormDataConvertible>;
 
-const { openEditDialog, closeEditDialog, openDeleteDialog, closeDeleteDialog, openCreateDialog, closeCreateDialog } = roomStore;
+    router.post(route('rooms.store'), formData, {
+        onSuccess: () => {
+            // closeCreateDialog();
+            toast({
+                title: 'Room Created',
+                description: 'New room has been created successfully',
+                variant: 'default',
+            });
+        },
+        onError: (errors) => {
+            error.value = errors.message || 'Failed to create room';
+            toast({
+                title: 'Error',
+                description: error.value,
+                variant: 'destructive',
+            });
+        },
+        onFinish: () => {
+            isLoading.value = false;
+        },
+    });
+};
 
-// Component state
-const searchQuery = ref('');
-const isSearching = ref(false);
-const currentPage = ref(1);
+const updateRoom = (roomData: Partial<Room>): void => {
+    if (!currentRoom.value) return;
 
-// Reset to first page when search query changes
-watch(searchQuery, () => {
-    currentPage.value = 1;
-    isSearching.value = true;
-    debouncedSearch();
-});
+    isLoading.value = true;
+    error.value = null;
 
-// Debounce search to improve performance
-const debouncedSearch = useDebounceFn(() => {
-    isSearching.value = false;
-}, 300);
+    // Create a FormData compatible object from roomData
+    const formData = { ...roomData } as Record<string, FormDataConvertible>;
 
-// Navigation helper
-const viewRoomDetails = (id: string) => {
+    router.put(route('rooms.update', currentRoom.value.id), formData, {
+        onSuccess: () => {
+            // closeEditDialog();
+            toast({
+                title: 'Room Updated',
+                description: 'Room has been updated successfully',
+                variant: 'default',
+            });
+        },
+        onError: (errors) => {
+            error.value = errors.message || 'Failed to update room';
+            toast({
+                title: 'Error',
+                description: error.value,
+                variant: 'destructive',
+            });
+        },
+        onFinish: () => {
+            isLoading.value = false;
+        },
+    });
+};
+
+const deleteRoom = (): void => {
+    if (!currentRoom.value) return;
+
+    isLoading.value = true;
+    error.value = null;
+
+    router.delete(route('rooms.destroy', currentRoom.value.id), {
+        onSuccess: () => {
+            // closeDeleteDialog();
+            toast({
+                title: 'Room Deleted',
+                description: 'Room has been deleted successfully',
+                variant: 'default',
+            });
+        },
+        onError: (errors) => {
+            error.value = errors.message || 'Failed to delete room';
+            toast({
+                title: 'Error',
+                description: error.value,
+                variant: 'destructive',
+            });
+        },
+        onFinish: () => {
+            isLoading.value = false;
+        },
+    });
+};
+
+// Navigation and event handlers
+const viewRoomDetails = (id: string): void => {
     router.get(route('rooms.show', id));
 };
 
-// Dialog handlers
-const handleEditRoom = (room: Room) => {
-    openEditDialog(room);
+const handleImported = (): void => {
+    router.reload();
 };
 
-const handleDeleteRoom = (room: Room) => {
-    openDeleteDialog(room);
+const clearSearch = (): void => {
+    searchQuery.value = '';
 };
-
-// Handle dialog submission
-
-// Handle dialog closure
-const handleDialogClose = () => {
-    if (isEditMode.value) {
-        closeEditDialog();
-    } else {
-        closeCreateDialog();
-    }
-};
-
-const dialogOpen = computed({
-    get: () => isCreateDialogOpen.value || isEditDialogOpen.value,
-    set: (value: boolean) => {
-        if (!value) {
-            handleDialogClose();
-        }
-    },
-});
-
-// Filtered rooms based on search
-const filteredRooms = computed(() => {
-    if (!searchQuery.value) return props.rooms.data;
-
-    const query = searchQuery.value.toLowerCase().trim();
-    return props.rooms.data.filter((room) => room.name.toLowerCase().includes(query));
-});
 </script>
 
 <template>
@@ -99,61 +158,60 @@ const filteredRooms = computed(() => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="relative min-h-[100vh] flex-1 rounded-xl md:min-h-min">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <!--* Search input with debounce -->
-                    <div class="relative w-full max-w-sm">
-                        <Input id="search" v-model="searchQuery" type="text" placeholder="Tìm phòng theo tên..." class="pl-10" />
-                        <span class="absolute inset-y-0 start-0 flex items-center justify-center px-2">
-                            <Search v-if="!isSearching" class="size-5 text-muted-foreground" />
-                            <Loader2 v-else class="size-5 animate-spin text-muted-foreground" />
-                        </span>
-                    </div>
+                    <!-- Search component -->
+                    <RoomSearch v-model:query="searchQuery" />
 
-                    <!--* Button to add a new room -->
-                    <Button class="bg-blue-500 text-white hover:bg-blue-600" @click="openCreateDialog()" :disabled="isLoading">
-                        <PlusCircle v-if="!isLoading" class="mr-2 size-4" />
-                        <Loader2 v-else class="mr-2 size-4 animate-spin" />
-                        Thêm Phòng
-                    </Button>
+                    <!-- Action buttons group -->
+                    <div class="flex gap-2">
+                        <!-- Import Button -->
+                        <Button variant="default" class="bg-blue-500 text-white hover:bg-blue-600" size="default" @click="isImportDialogOpen = true">
+                            <ArrowUpCircle class="mr-2 size-4" />
+                            <span>Import</span>
+                        </Button>
+
+                        <!-- Button to add a new room -->
+                        <Button class="bg-blue-500 text-white hover:bg-blue-600" @click="openCreateDialog()" :disabled="isLoading">
+                            <PlusCircle v-if="!isLoading" class="mr-2 size-4" />
+                            <Loader2 v-else class="mr-2 size-4 animate-spin" />
+                            Thêm Phòng
+                        </Button>
+                    </div>
                 </div>
+
+                <!-- Import Dialog component -->
+                <RoomImportDialog v-model:is-open="isImportDialogOpen" @imported="handleImported" />
 
                 <!-- Loading state -->
                 <div v-if="isLoading" class="flex justify-center py-12">
                     <Loader2 class="size-12 animate-spin text-muted-foreground" />
                 </div>
+
                 <!-- Error state -->
                 <Alert v-else-if="error" variant="destructive" class="mb-6">
                     <AlertCircle class="size-4" />
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{{ error }}</AlertDescription>
                 </Alert>
-                <!-- Empty state when no rooms exist -->
-                <div v-else-if="props.rooms.data.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-                    <FolderOpen class="size-12 text-muted-foreground" />
-                    <h3 class="mt-4 text-lg font-medium">Chưa có phòng nào</h3>
-                    <p class="text-muted-foreground">Bắt đầu tạo một phòng mới bằng cách nhấn nút "Thêm Phòng"</p>
-                </div>
-                <!-- Room grid -->
-                <div v-else>
-                    <!-- Grid display for rooms -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        <RoomCard
-                            v-for="room in filteredRooms"
-                            :key="room.id"
-                            :room="room"
-                            @view="viewRoomDetails(room.id)"
-                            @edit="handleEditRoom(room)"
-                            @delete="handleDeleteRoom(room)"
-                            :is-loading="isLoading"
-                        />
-                    </div>
 
-                    <!-- No search results message -->
-                    <div v-if="filteredRooms.length === 0" class="mt-8 text-center text-gray-500">
-                        <Search class="mx-auto mb-2 size-8" />
-                        <p>Không tìm thấy phòng nào phù hợp với từ khóa "{{ searchQuery }}"</p>
-                        <Button variant="ghost" class="mt-2" @click="searchQuery = ''"> Xóa tìm kiếm </Button>
-                    </div>
-                </div>
+                <!-- Empty state when no rooms exist -->
+                <RoomEmptyState v-else-if="props.rooms.data.length === 0" @create="openCreateDialog" />
+
+                <!-- Room grid -->
+                <RoomGrid
+                    v-else
+                    :rooms="props.rooms.data"
+                    :search-query="searchQuery"
+                    :is-loading="isLoading"
+                    @view="viewRoomDetails"
+                    @edit="openEditDialog"
+                    @delete="
+                        (room) => {
+                            openDeleteDialog(room);
+                            deleteRoom();
+                        }
+                    "
+                    @clear-search="clearSearch"
+                />
             </div>
         </div>
 
@@ -161,8 +219,9 @@ const filteredRooms = computed(() => {
         <RoomDialog
             :form-id="isEditMode ? `editRoomForm-${currentRoom?.id}` : 'createRoomForm'"
             :is-edit="isEditMode"
-            :room="currentRoom"
+            :room="currentRoom || undefined"
             v-model:is-open="dialogOpen"
+            @submit="isEditMode ? updateRoom($event) : createRoom($event)"
         />
     </AppLayout>
 </template>

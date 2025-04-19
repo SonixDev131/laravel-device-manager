@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Computer } from '@/types';
 import { computed } from 'vue';
 
@@ -44,6 +46,30 @@ const statusTextClass = computed(() => {
 
     return baseClasses.join(' ');
 });
+
+// Format uptime in a human-readable way (e.g., "2 days 3 hours")
+const formattedUptime = computed(() => {
+    const uptime = props.computer.system_metrics?.uptime;
+    if (!uptime) return 'Unknown';
+
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+
+    if (days > 0) {
+        return `${days}d ${hours}h`;
+    } else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+});
+
+// Format percentage values with 1 decimal place
+const formatPercent = (value?: number) => {
+    if (value === undefined) return 'N/A';
+    return `${value.toFixed(1)}%`;
+};
 
 // Status ring class bindings
 const statusRingClass = computed(() => {
@@ -94,16 +120,86 @@ const computerClass = computed(() => {
 
 <template>
     <div class="flex flex-col items-center">
-        <!-- Computer item (box) -->
-        <div :class="computerClass" @click="$emit('click')">
-            <!-- Status ring overlay (subtle background effect) -->
-            <div :class="statusRingClass"></div>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger as-child>
+                    <!-- Computer item (box) -->
+                    <div :class="computerClass" @click="$emit('click')">
+                        <!-- Status ring overlay (subtle background effect) -->
+                        <div :class="statusRingClass"></div>
 
-            <!-- Computer content -->
-            <div class="z-10 flex items-center justify-center">
-                <span class="max-w-full truncate text-sm font-medium">{{ computer.name }}</span>
-            </div>
-        </div>
+                        <!-- Computer content -->
+                        <div class="z-10 flex items-center justify-center">
+                            <span class="max-w-full truncate text-sm font-medium">{{ computer.name }}</span>
+                        </div>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent v-if="computer.system_metrics" class="w-60 p-0" side="right">
+                    <div class="rounded-md border bg-card text-card-foreground shadow-sm">
+                        <div class="flex flex-col gap-2 p-3">
+                            <!-- Header with computer name -->
+                            <div class="flex items-center justify-between border-b pb-1">
+                                <h4 class="text-sm font-semibold">{{ computer.name }}</h4>
+                                <span class="text-xs text-muted-foreground">
+                                    {{ computer.ip_address || 'No IP' }}
+                                </span>
+                            </div>
+
+                            <!-- Metrics section -->
+                            <div class="space-y-2">
+                                <!-- CPU Usage -->
+                                <div v-if="computer.system_metrics?.cpu_usage !== undefined"
+                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-medium">CPU</span>
+                                            <span class="text-xs text-muted-foreground">{{
+                                                formatPercent(computer.system_metrics?.cpu_usage) }}</span>
+                                        </div>
+                                        <Progress class="h-1.5" :value="computer.system_metrics?.cpu_usage" />
+                                    </div>
+                                </div>
+
+                                <!-- Memory Usage -->
+                                <div v-if="computer.system_metrics?.memory_usage !== undefined"
+                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-medium">Memory</span>
+                                            <span class="text-xs text-muted-foreground">{{
+                                                formatPercent(computer.system_metrics?.memory_usage)
+                                                }}</span>
+                                        </div>
+                                        <Progress class="h-1.5" :value="computer.system_metrics?.memory_usage" />
+                                    </div>
+                                </div>
+
+                                <!-- Disk Usage -->
+                                <div v-if="computer.system_metrics?.disk_usage !== undefined"
+                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-medium">Disk</span>
+                                            <span class="text-xs text-muted-foreground">{{
+                                                formatPercent(computer.system_metrics?.disk_usage)
+                                                }}</span>
+                                        </div>
+                                        <Progress class="h-1.5" :value="computer.system_metrics?.disk_usage" />
+                                    </div>
+                                </div>
+
+                                <!-- Uptime + Platform -->
+                                <div class="mt-1 flex items-center justify-between border-t pt-1 text-xs">
+                                    <span class="text-muted-foreground">Uptime: {{ formattedUptime }}</span>
+                                    <span class="font-medium">{{ computer.system_metrics?.platform || 'Unknown OS'
+                                        }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
 
         <!-- Status indicator outside and below the computer box -->
         <div class="mt-1 flex items-center justify-center">
@@ -115,10 +211,12 @@ const computerClass = computed(() => {
 
 <style scoped>
 @keyframes pulse {
+
     0%,
     100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.5;
     }

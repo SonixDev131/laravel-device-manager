@@ -16,11 +16,9 @@ import {
     PowerIcon,
     PowerOffIcon,
     RefreshCwIcon,
-    TerminalIcon,
     XIcon,
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
-import InstallationScriptDialog from './InstallationScriptDialog.vue';
 
 const commandMode = defineModel<'selected' | 'all'>('commandMode', {
     default: 'selected',
@@ -106,14 +104,6 @@ const confirmCommand = () => {
 const cancelCommand = () => {
     pendingCommand.value = null;
     showConfirmation.value = false;
-};
-
-// Add state for installation script dialog
-const installationScriptOpen = ref(false);
-
-// Open installation script dialog
-const openInstallationScript = () => {
-    installationScriptOpen.value = true;
 };
 </script>
 
@@ -202,12 +192,6 @@ const openInstallationScript = () => {
                     <DownloadIcon class="mr-2 h-4 w-4" />
                     Update
                 </Button>
-
-                <!-- Add Installation Script button -->
-                <Button class="h-10 flex-1 justify-start" variant="outline" @click="openInstallationScript">
-                    <TerminalIcon class="mr-2 h-4 w-4" />
-                    Install Agent
-                </Button>
             </div>
         </div>
 
@@ -227,8 +211,5 @@ const openInstallationScript = () => {
                 </div>
             </div>
         </div>
-
-        <!-- Installation Script Dialog -->
-        <InstallationScriptDialog v-model:is-open="installationScriptOpen" :room-id="roomId" />
     </div>
 </template>

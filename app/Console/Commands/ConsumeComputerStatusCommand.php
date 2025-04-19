@@ -163,6 +163,8 @@ final class ConsumeComputerStatusCommand extends Command
             $body = $message->getBody();
             $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
 
+            $this->info('Received message: '.$body);
+
             $this->info('Received heartbeat from computer: '.($data['computer_id'] ?? 'unknown'));
 
             // Process the heartbeat data

@@ -13,8 +13,8 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->text('name')->unique();
-            $table->integer('grid_rows')->nullable('false');
-            $table->integer('grid_cols')->nullable('false');
+            $table->integer('grid_rows');
+            $table->integer('grid_cols');
             $table->timestampsTz();
         });
     }

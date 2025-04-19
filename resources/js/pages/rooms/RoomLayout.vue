@@ -6,6 +6,8 @@ import { Room, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
+// usePoll(2000);
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Rooms',

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\InstallationScriptController;
 use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
@@ -26,12 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/rooms/{room}/commands', [RoomCommandController::class, 'handleCommand'])
         ->name('rooms.commands.dispatch');
-});
 
-// Installation script generation
-Route::post('rooms/installation-script/generate', [InstallationScriptController::class, 'generate'])
-    ->name('rooms.installation-script.generate')
-    ->middleware(['auth']);
+    Route::post('rooms/import', [RoomController::class, 'import'])->name('rooms.import');
+});
 
 // Agent download endpoints (to be implemented later)
 // Route::get('/api/download/agent/{os}', [AgentDownloadController::class, 'download'])

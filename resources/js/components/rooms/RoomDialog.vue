@@ -81,7 +81,7 @@ const onSubmit = () => {
 };
 </script>
 <template>
-    <Dialog :open="isOpen">
+    <Dialog v-model:open="isOpen">
         <DialogContent class="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>{{ isEdit ? 'Chỉnh Sửa Phòng' : 'Thêm Phòng Mới' }}</DialogTitle>

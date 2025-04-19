@@ -6,7 +6,7 @@ namespace App\Services\RabbitMQ;
 
 use Illuminate\Support\Facades\Config;
 
- // Use Facade for cleaner access
+// Use Facade for cleaner access
 
 /**
  * Configuration accessor for RabbitMQ service based on config/rabbitmq.php
