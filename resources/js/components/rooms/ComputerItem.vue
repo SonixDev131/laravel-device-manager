@@ -148,41 +148,37 @@ const computerClass = computed(() => {
                             <!-- Metrics section -->
                             <div class="space-y-2">
                                 <!-- CPU Usage -->
-                                <div v-if="computer.system_metrics?.cpu_usage !== undefined"
-                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.system_metrics?.cpu_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">CPU</span>
-                                            <span class="text-xs text-muted-foreground">{{
-                                                formatPercent(computer.system_metrics?.cpu_usage) }}</span>
+                                            <span class="text-xs text-muted-foreground">{{ formatPercent(computer.system_metrics?.cpu_usage) }}</span>
                                         </div>
                                         <Progress class="h-1.5" :value="computer.system_metrics?.cpu_usage" />
                                     </div>
                                 </div>
 
                                 <!-- Memory Usage -->
-                                <div v-if="computer.system_metrics?.memory_usage !== undefined"
-                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.system_metrics?.memory_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Memory</span>
                                             <span class="text-xs text-muted-foreground">{{
                                                 formatPercent(computer.system_metrics?.memory_usage)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <Progress class="h-1.5" :value="computer.system_metrics?.memory_usage" />
                                     </div>
                                 </div>
 
                                 <!-- Disk Usage -->
-                                <div v-if="computer.system_metrics?.disk_usage !== undefined"
-                                    class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.system_metrics?.disk_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Disk</span>
                                             <span class="text-xs text-muted-foreground">{{
                                                 formatPercent(computer.system_metrics?.disk_usage)
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                         <Progress class="h-1.5" :value="computer.system_metrics?.disk_usage" />
                                     </div>
@@ -191,8 +187,7 @@ const computerClass = computed(() => {
                                 <!-- Uptime + Platform -->
                                 <div class="mt-1 flex items-center justify-between border-t pt-1 text-xs">
                                     <span class="text-muted-foreground">Uptime: {{ formattedUptime }}</span>
-                                    <span class="font-medium">{{ computer.system_metrics?.platform || 'Unknown OS'
-                                        }}</span>
+                                    <span class="font-medium">{{ computer.system_metrics?.platform || 'Unknown OS' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -211,7 +206,6 @@ const computerClass = computed(() => {
 
 <style scoped>
 @keyframes pulse {
-
     0%,
     100% {
         opacity: 1;

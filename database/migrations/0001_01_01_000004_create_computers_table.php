@@ -25,7 +25,7 @@ return new class extends Migration
         });
 
         // Create a trigger function to validate computer positions
-        DB::unprepared('
+        \DB::unprepared('
             CREATE OR REPLACE FUNCTION validate_computer_position()
             RETURNS TRIGGER AS $$
             DECLARE

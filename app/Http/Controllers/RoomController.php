@@ -6,17 +6,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateRoomAction;
 use App\Actions\DeleteRoomAction;
-use App\Actions\ImportRoomAction;
 use App\Actions\UpdateRoomAction;
 use App\Http\Requests\DeleteRoomRequest;
-use App\Http\Requests\FileImportRoomsRequest;
-use App\Http\Requests\ImportRoomsRequest;
 use App\Http\Requests\StoreRoomRequest;
 use App\Http\Requests\UpdateRoomRequest;
 use App\Http\Resources\RoomResource;
 use App\Models\Computer;
 use App\Models\Room;
-use Illuminate\Http\JsonResponse;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -86,7 +83,7 @@ final class RoomController extends Controller
     /**
      * Import rooms and computers from JSON data or file upload.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function import(Request $request)
     {
@@ -96,7 +93,7 @@ final class RoomController extends Controller
 
         try {
             $file = $request->file('jsonFile');
-            $contents  = $file->get();
+            $contents = $file->get();
             $data = json_decode($contents, true);
 
             debug($data);
@@ -121,8 +118,9 @@ final class RoomController extends Controller
             }
 
             return redirect()->back()->with('success', 'Import thành công');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("Lỗi import file: {$e->getMessage()}");
+
             return response()->json(['error' => 'Lỗi import file'], 500);
         }
     }
