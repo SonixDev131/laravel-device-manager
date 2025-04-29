@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+use App\Http\Controllers\InstallationScriptController;
 use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
@@ -25,9 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/rooms/{room}/commands', [RoomCommandController::class, 'handleCommand'])
         ->name('rooms.commands.dispatch');
-
-    Route::post('rooms/import', [RoomController::class, 'import'])->name('rooms.import');
 });
+
+// Installation script generation
+Route::post('rooms/installation-script/generate', [InstallationScriptController::class, 'generate'])
+    ->name('rooms.installation-script.generate')
+    ->middleware(['auth']);
 
 // Agent download endpoints (to be implemented later)
 // Route::get('/api/download/agent/{os}', [AgentDownloadController::class, 'download'])
@@ -35,7 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 //     ->where('os', 'windows|linux|mac');
 
 // Agent registration endpoint (to be implemented later)
-// Route::post('/api/computers/register', [\ComputerController::class, 'register'])
+// Route::post('/api/computers/register', [ComputerController::class, 'register'])
 //     ->name('api.computers.register');
 
 require __DIR__.'/settings.php';

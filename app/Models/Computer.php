@@ -13,6 +13,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @mixin IdeHelperComputer
+ * Computer model representing a physical or virtual computer in the system.
+ *
+ * @property string $id UUID primary key
+ * @property \App\Enums\ComputerStatus $status Current operational status
+ * @property \Carbon\Carbon|null $last_seen_at When we last received a heartbeat
+ * @property array|null $system_metrics System metrics data
+ * @property string|null $room_id Foreign key to the room
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ *
+ * @property-read \App\Models\Room $room
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Command> $commands
+ *
+ * @method static \Database\Factories\ComputerFactory factory()
  */
 final class Computer extends Model
 {
@@ -56,7 +70,6 @@ final class Computer extends Model
             $this->status = ComputerStatus::ONLINE;
             $wasChanged = true;
         }
-
         if ($wasChanged) {
             $this->save();
         }
