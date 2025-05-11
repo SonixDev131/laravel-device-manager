@@ -8,6 +8,6 @@ enum CommandStatus: string
 {
     case PENDING = 'pending';
     case IN_PROGRESS = 'in_progress';
-    case COMPLETED = 'completed';
+    case SENT = 'sent';
     case FAILED = 'failed';
 }

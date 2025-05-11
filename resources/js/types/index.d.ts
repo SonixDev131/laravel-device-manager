@@ -49,27 +49,28 @@ export interface Room {
 
 export interface Computer {
     id: string;
-    name: string;
+    hostname: string;
     mac_address: string;
-    ip_address?: string;
     pos_row: number;
     pos_col: number;
     created_at: string;
     updated_at: string;
-    last_seen_at?: string;
     room_id: string;
     status: ComputerStatus;
+    last_heartbeat_at: string;
     system_metrics?: SystemMetrics;
 }
 
 export interface SystemMetrics {
-    cpu_usage?: number;
-    memory_usage?: number;
-    disk_usage?: number;
-    uptime?: number;
-    platform?: string;
-    platform_version?: string;
-    hostname?: string;
+    cpu_usage: number;
+    memory_total: number;
+    memory_used: number;
+    disk_total: number;
+    disk_used: number;
+    uptime: number;
+    platform: string;
+    platform_version: string;
+    hostname: string;
     [key: string]: any; // Allow for additional metrics
 }
 
@@ -79,6 +80,17 @@ export enum ComputerStatus {
     SHUTTING_DOWN = 'shutting_down',
     IDLE = 'idle',
     MAINTENANCE = 'maintenance',
+}
+
+export enum CommandType {
+    LOCK = 'LOCK',
+    MESSAGE = 'MESSAGE',
+    SCREENSHOT = 'SCREENSHOT',
+    SHUTDOWN = 'SHUTDOWN',
+    RESTART = 'RESTART',
+    LOG_OUT = 'LOG_OUT',
+    UPDATE = 'UPDATE',
+    CUSTOM = 'CUSTOM',
 }
 
 export interface RoomFormData {

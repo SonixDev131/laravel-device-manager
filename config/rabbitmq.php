@@ -7,69 +7,86 @@ return [
     |--------------------------------------------------------------------------
     | RabbitMQ Connection Settings
     |--------------------------------------------------------------------------
+    |
+    | This file contains the configuration settings for connecting to RabbitMQ.
+    |
     */
-    'connection' => [
-        'host' => env('RABBITMQ_HOST', 'localhost'),
-        'port' => (int) env('RABBITMQ_PORT', 5672),
-        'user' => env('RABBITMQ_USER', 'guest'),
-        'password' => env('RABBITMQ_PASSWORD', 'guest'),
-        'vhost' => env('RABBITMQ_VHOST', '/'),
-    ],
+
+    'host' => env('RABBITMQ_HOST', 'localhost'),
+    'port' => env('RABBITMQ_PORT', 5672),
+    'username' => env('RABBITMQ_USERNAME', 'guest'),
+    'password' => env('RABBITMQ_PASSWORD', 'guest'),
+    'vhost' => env('RABBITMQ_VHOST', '/'),
 
     /*
     |--------------------------------------------------------------------------
-    | RabbitMQ Exchanges Configuration
+    | RabbitMQ Exchange Settings
     |--------------------------------------------------------------------------
-    | Define all exchanges used by the application.
+    |
+    | These settings define the exchanges used for different messaging patterns.
+    |
     */
+
     'exchanges' => [
-        'commands' => [
-            'name' => 'unilab.commands',
-            'type' => 'topic', // e.g., direct, topic, fanout, headers
-            'durable' => true,
-            'auto_delete' => false,
-            'passive' => false, // Add passive flag if needed
-        ],
-        'status' => [
-            'name' => 'unilab.status',
-            'type' => 'topic',
-            'durable' => true,
-            'auto_delete' => false,
+        'direct' => [
+            'name' => 'cmd.direct',
+            'type' => 'direct',
             'passive' => false,
+            'durable' => true,
+            'auto_delete' => false,
+        ],
+        'broadcast' => [
+            'name' => 'broadcast.fanout',
+            'type' => 'fanout',
+            'passive' => false,
+            'durable' => true,
+            'auto_delete' => false,
         ],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | RabbitMQ Queues Configuration
+    | RabbitMQ Consumer Settings
     |--------------------------------------------------------------------------
-    | Define all queues used by the application.
+    |
+    | These settings define the behavior of message consumers.
+    |
     */
-    'queues' => [
-        'computer_status' => 'unilab.computer.status',
-        'computer_commands' => 'unilab.computer.commands',
-        // Add other queues as needed
-    ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | RabbitMQ Routing Keys Configuration
-    |--------------------------------------------------------------------------
-    | Define routing key patterns.
-    */
-    'routing_keys' => [
-        'command_computer' => 'room.{room}.computer.{computer}',
-        'command_room_broadcast' => 'room.{room}.all',
-        'status_updates' => 'status.#',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Consumer Settings
-    |--------------------------------------------------------------------------
-    */
     'consumer' => [
-        'prefetch_count' => (int) env('RABBITMQ_PREFETCH_COUNT', 10),
-        'timeout' => (int) env('RABBITMQ_TIMEOUT', 0), // 0 means wait indefinitely
+        'prefetch_count' => 1,
+        'reconnect_delay' => 5, // seconds
+        'max_retries' => 5,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Message Settings
+    |--------------------------------------------------------------------------
+    |
+    | Default settings for messages published to RabbitMQ.
+    |
+    */
+
+    'message' => [
+        'content_type' => 'application/json',
+        'delivery_mode' => 2, // persistent
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Command Types
+    |--------------------------------------------------------------------------
+    |
+    | Mapping of command types to their internal representations.
+    |
+    */
+
+    'command_types' => [
+        'update' => 'agent.update',
+        'restart' => 'agent.restart',
+        'shutdown' => 'agent.shutdown',
+        'execute' => 'agent.execute',
+        'status' => 'agent.status',
     ],
 ];

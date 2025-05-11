@@ -20,6 +20,8 @@ import {
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
+import { CommandType } from '@/types/command';
+
 const commandMode = defineModel<'selected' | 'all'>('commandMode', {
     default: 'selected',
 });
@@ -35,8 +37,6 @@ const emit = defineEmits<{
     selectAll: [];
     executeCommand: [command: CommandType];
 }>();
-
-type CommandType = 'shutdown' | 'restart' | 'logout' | 'lock' | 'message' | 'screenshot' | 'update';
 
 const showConfirmation = ref(false);
 const pendingCommand = ref<CommandType | null>(null);
@@ -66,18 +66,19 @@ const isSelectionEmpty = computed(() => {
 
 // Map commands to descriptions
 const commandDescriptions: Record<CommandType, string> = {
-    shutdown: 'Shutdown selected computers',
-    restart: 'Restart selected computers',
-    logout: 'Log out users from selected computers',
-    lock: 'Lock selected computers',
-    message: 'Send message to selected computers',
-    screenshot: 'Take screenshot of selected computers',
-    update: 'Update agent on selected computers',
+    SHUTDOWN: 'Shutdown selected computers',
+    RESTART: 'Restart selected computers',
+    LOG_OUT: 'Log out users from selected computers',
+    LOCK: 'Lock selected computers',
+    MESSAGE: 'Send message to selected computers',
+    SCREENSHOT: 'Take screenshot of selected computers',
+    UPDATE: 'Update agent on selected computers',
+    CUSTOM: 'Execute custom command',
 };
 
 // Handle command with confirmation for critical commands
 const handleCommand = (command: CommandType) => {
-    const criticalCommands = ['shutdown', 'restart', 'logout'];
+    const criticalCommands = [CommandType.SHUTDOWN, CommandType.RESTART, CommandType.LOG_OUT];
 
     // Update description based on current mode
     const baseDescription = commandDescriptions[command] || 'Execute command';
@@ -147,17 +148,22 @@ const cancelCommand = () => {
         <div class="space-y-4">
             <!-- Quick access common commands with consistent button height -->
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('lock')">
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.LOCK)">
                     <LockIcon class="mr-2 h-4 w-4" />
                     Lock
                 </Button>
 
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('message')">
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.MESSAGE)">
                     <MessageSquareIcon class="mr-2 h-4 w-4" />
                     Message
                 </Button>
 
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('screenshot')">
+                <Button
+                    class="h-10 flex-1 justify-start"
+                    variant="outline"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.SCREENSHOT)"
+                >
                     <ImageIcon class="mr-2 h-4 w-4" />
                     Screenshot
                 </Button>
@@ -172,15 +178,15 @@ const cancelCommand = () => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem @click="handleCommand('shutdown')" class="text-destructive">
+                        <DropdownMenuItem @click="handleCommand(CommandType.SHUTDOWN)" class="text-destructive">
                             <PowerOffIcon class="mr-2 h-4 w-4" />
                             Shutdown
                         </DropdownMenuItem>
-                        <DropdownMenuItem @click="handleCommand('restart')">
+                        <DropdownMenuItem @click="handleCommand(CommandType.RESTART)">
                             <RefreshCwIcon class="mr-2 h-4 w-4" />
                             Restart
                         </DropdownMenuItem>
-                        <DropdownMenuItem @click="handleCommand('logout')">
+                        <DropdownMenuItem @click="handleCommand(CommandType.LOG_OUT)">
                             <LogOutIcon class="mr-2 h-4 w-4" />
                             Logout
                         </DropdownMenuItem>
@@ -188,7 +194,7 @@ const cancelCommand = () => {
                 </DropdownMenu>
 
                 <!-- Maintenance commands -->
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand('update')">
+                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.UPDATE)">
                     <DownloadIcon class="mr-2 h-4 w-4" />
                     Update
                 </Button>

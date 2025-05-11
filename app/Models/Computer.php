@@ -5,144 +5,78 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ComputerStatus;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * @mixin IdeHelperComputer
- * Computer model representing a physical or virtual computer in the system.
- *
  * @property string $id UUID primary key
- * @property \App\Enums\ComputerStatus $status Current operational status
- * @property \Carbon\Carbon|null $last_seen_at When we last received a heartbeat
- * @property array|null $system_metrics System metrics data
+ * @property ComputerStatus $status Current operational status
  * @property string|null $room_id Foreign key to the room
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Room $room The room this computer is located in
+ * @property-read Collection<int, Command> $commands Commands assigned to this computer
+ * @property-read Collection<int, Metric> $metrics Metrics collected from this computer
  *
- * @property-read \App\Models\Room $room
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Command> $commands
+ * @method static \Database\Factories\ComputerFactory factory($count = null, $state = [])
  *
- * @method static \Database\Factories\ComputerFactory factory()
+ * @property string $mac_address
+ * @property string $hostname
+ * @property int $pos_row
+ * @property int $pos_col
+ * @property-read int|null $commands_count
+ * @property-read int|null $metrics_count
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereHostname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereMacAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer wherePosCol($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer wherePosRow($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereRoomId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Computer whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
  */
 final class Computer extends Model
 {
     use HasFactory, HasUuids;
 
-    /**
-     * Check if computer has timed out (is considered offline)
-     */
-    public function hasTimedOut(int $timeoutInMinutes = 3): bool
-    {
-        // If it's never been seen, it's considered offline
-        if (! $this->last_seen_at) {
-            return true;
-        }
+    protected $casts = [
+        'last_heartbeat_at' => 'datetime',
+    ];
 
-        // Check if the last_seen_at timestamp is older than the timeout period
-        return $this->last_seen_at->addMinutes($timeoutInMinutes)->isPast();
-    }
-
-    /**
-     * Update the computer's status based on the heartbeat timeout
-     */
-    public function updateStatusBasedOnTimeout(int $timeoutInMinutes = 3): bool
-    {
-        // Only update status if the current status is not MAINTENANCE or SHUTTING_DOWN
-        if ($this->status === ComputerStatus::MAINTENANCE || $this->status === ComputerStatus::SHUTTING_DOWN) {
-            return false;
-        }
-
-        $wasChanged = false;
-
-        // If computer has timed out, mark it as offline
-        if ($this->hasTimedOut($timeoutInMinutes)) {
-            // Only update if current status is not already OFFLINE
-            if ($this->status !== ComputerStatus::OFFLINE) {
-                $this->status = ComputerStatus::OFFLINE;
-                $wasChanged = true;
-            }
-        } elseif ($this->status === ComputerStatus::OFFLINE) {
-            // If it hasn't timed out but status is OFFLINE, change to ONLINE
-            $this->status = ComputerStatus::ONLINE;
-            $wasChanged = true;
-        }
-        if ($wasChanged) {
-            $this->save();
-        }
-
-        return $wasChanged;
-    }
-
-    /**
-     * Update the computer's status and last_seen_at timestamp based on a heartbeat from the agent
-     */
-    public function updateFromHeartbeat(string $status, array $metrics = []): bool
-    {
-        // Map agent status to ComputerStatus enum
-        $computerStatus = match ($status) {
-            'online' => ComputerStatus::ONLINE,
-            'offline' => ComputerStatus::OFFLINE,
-            'shutting_down', 'restarting' => ComputerStatus::SHUTTING_DOWN,
-            'idle' => ComputerStatus::IDLE,
-            default => $this->status, // Keep current status if unknown
-        };
-
-        // Don't change status if computer is in maintenance mode
-        if ($this->status === ComputerStatus::MAINTENANCE) {
-            // But still update last_seen_at
-            $this->last_seen_at = now();
-            $this->save();
-
-            return false;
-        }
-
-        $changed = $this->status !== $computerStatus;
-
-        // Update the status and last_seen_at
-        $this->status = $computerStatus;
-        $this->last_seen_at = now();
-
-        // Store system metrics if provided
-        if (! empty($metrics)) {
-            $this->system_metrics = $metrics;
-        }
-
-        $this->save();
-
-        return $changed;
-    }
-
-    /**
-     * Get the room that the computer belongs to
-     */
+    /** @return BelongsTo<Room, $this> */
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
-    /**
-     * Get the commands that have been assigned to this computer
-     */
+    /** @return HasMany<Command, $this> */
     public function commands(): HasMany
     {
         return $this->hasMany(Command::class);
     }
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected function casts(): array
+    /** @return HasMany<Metric, $this> */
+    public function metrics(): HasMany
     {
-        return [
-            'status' => ComputerStatus::class,
-            'last_seen_at' => 'datetime',
-            'system_metrics' => 'array',
-        ];
+        return $this->hasMany(Metric::class);
+    }
+
+    /** @return HasOne<Metric, $this> */
+    public function latestMetric(): HasOne
+    {
+        return $this->hasOne(Metric::class)->latest();
     }
 }

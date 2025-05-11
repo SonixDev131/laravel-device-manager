@@ -19,8 +19,7 @@ return new class extends Migration
             $table->integer('pos_row');
             $table->integer('pos_col');
             $table->string('status')->default(ComputerStatus::OFFLINE);
-            $table->timestamp('last_seen_at')->nullable();
-            $table->jsonb('system_metrics')->nullable()->comment('System metrics reported by agent (CPU, RAM, etc.)');
+            $table->timestampTz('last_heartbeat_at')->nullable();
             $table->timestampsTz();
         });
 

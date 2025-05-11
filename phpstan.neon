@@ -8,10 +8,10 @@ parameters:
         - app/
 
     # Level 10 is the highest level
-    level: 5
+    level: max
 
 #    ignoreErrors:
 #        - '#PHPDoc tag @var#'
 #
-#    excludePaths:
-#        - ./*/*/FileToBeExcluded.php
+    excludePaths:
+        - vendor/*

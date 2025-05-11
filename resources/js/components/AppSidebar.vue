@@ -3,22 +3,46 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { Folder, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Folder, LayoutGrid, Settings } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Rooms',
-        href: '/rooms',
-        icon: Folder,
-    },
-];
+// Get the current user to determine admin status
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const isAdmin = computed(() => user.value?.is_admin === true);
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: '/dashboard',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Rooms',
+            href: '/rooms',
+            icon: Folder,
+        },
+        {
+            title: 'Agents Management',
+            href: '/agents',
+            icon: Settings,
+        },
+    ];
+
+    // Only show Agents Management to admin users
+    // if (isAdmin.value) {
+    //     items.push({
+    //         title: 'Agents Management',
+    //         href: '/agents',
+    //         icon: Settings,
+    //     });
+    // }
+
+    return items;
+});
 
 // const footerNavItems: NavItem[] = [
 //     {

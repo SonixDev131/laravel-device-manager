@@ -73,7 +73,9 @@ final class RoomController extends Controller
      */
     public function show(Room $room): Response
     {
-        $room->load('computers');
+        $room->load([
+            'computers.latestMetric', // Use a dedicated relationship
+        ]);
 
         return Inertia::render('rooms/RoomLayout', [
             'room' => RoomResource::make($room),

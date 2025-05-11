@@ -2,11 +2,12 @@
 import ControlBar from '@/components/rooms/ComputerControls.vue';
 import ComputerGrid from '@/components/rooms/ComputerGrid.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Room, type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Computer, Room, type BreadcrumbItem, type CommandType } from '@/types';
+import { Head, router, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-// usePoll(2000);
+// -> use to polling your server for new information on the current page
+usePoll(30000);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -39,7 +40,7 @@ const clearSelection = () => {
 
 const selectAllComputers = () => {
     if (!props.room.data.computers?.length) return;
-    selectedComputers.value = props.room.data.computers.map((computer) => computer.id);
+    selectedComputers.value = props.room.data.computers.map((computer: Computer) => computer.id);
 };
 
 const toggleComputerSelection = (computerId: string) => {
@@ -52,7 +53,7 @@ const toggleComputerSelection = (computerId: string) => {
 };
 
 // Command execution
-const executeCommand = (commandType: string) => {
+const executeCommand = (commandType: CommandType) => {
     console.log(`Executing ${commandType} on computers:`, commandMode.value === 'all' ? 'all computers' : selectedComputers.value);
 
     if (commandMode.value === 'selected') {
@@ -61,22 +62,22 @@ const executeCommand = (commandType: string) => {
 
         if (selectedComputers.value.length === 1) {
             router.post(
-                route('rooms.commands.dispatch', {
+                route('rooms.commands.publish', {
                     room: props.room.data.id,
                 }),
                 {
-                    command_type: commandType.toUpperCase(),
+                    command_type: commandType,
                     target_type: 'single',
                     computer_id: selectedComputers.value[0],
                 },
             );
         } else {
             router.post(
-                route('rooms.commands.dispatch', {
+                route('rooms.commands.publish', {
                     room: props.room.data.id,
                 }),
                 {
-                    command_type: commandType.toUpperCase(),
+                    command_type: commandType,
                     target_type: 'group',
                     computer_ids: selectedComputers.value,
                 },
@@ -85,11 +86,11 @@ const executeCommand = (commandType: string) => {
     } else {
         // Gửi lệnh đến toàn bộ phòng
         router.post(
-            route('rooms.commands.dispatch', {
+            route('rooms.commands.publish', {
                 room: props.room.data.id,
             }),
             {
-                command_type: commandType.toUpperCase(),
+                command_type: commandType,
                 target_type: 'all',
                 // Không cần computer_ids - backend sẽ hiểu là toàn bộ phòng
             },
@@ -103,15 +104,18 @@ const executeCommand = (commandType: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-[calc(100svh-4rem)] flex-col gap-4 overflow-hidden p-4">
-            <ControlBar
-                :selected-computers="selectedComputers"
-                :total-computers="totalComputers"
-                :room-id="room.data.id"
-                v-model:commandMode="commandMode"
-                @clear-selection="clearSelection"
-                @select-all="selectAllComputers"
-                @execute-command="executeCommand"
-            />
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <ControlBar
+                    :selected-computers="selectedComputers"
+                    :total-computers="totalComputers"
+                    :room-id="room.data.id"
+                    v-model:commandMode="commandMode"
+                    @clear-selection="clearSelection"
+                    @select-all="selectAllComputers"
+                    @execute-command="executeCommand"
+                    class="flex-grow"
+                />
+            </div>
             <ComputerGrid
                 :room="room"
                 :selected-computers="selectedComputers"

@@ -10,7 +10,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @mixin IdeHelperCommand
+ *
+ *
+ * @property string $id
+ * @property string|null $computer_id
+ * @property string|null $room_id
+ * @property string $type
+ * @property string|null $params
+ * @property string $status
+ * @property bool $is_group_command
+ * @property string|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Computer|null $computer
+ * @property-read \App\Models\Room|null $room
+ * @method static \Database\Factories\CommandFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereComputerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereIsGroupCommand($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereParams($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereRoomId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Command whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 final class Command extends Model
 {

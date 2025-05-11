@@ -125,4 +125,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'uploads' => [
+        'disk' => env('FILESYSTEM_DISK', 'local'),
+        'hash' => env('HASH_ALGORITHM', 'bcrypt'),
+    ],
 ];

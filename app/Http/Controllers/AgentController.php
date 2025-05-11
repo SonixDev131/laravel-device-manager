@@ -17,8 +17,8 @@ class AgentController extends Controller
     {
         // Validate input
         $validator = Validator::make($request->all(), [
-            'mac_address' => 'required|string|regex:/^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$/',
-            'hostname' => 'required|string|max:255',
+            'mac_address' => ['required', 'string', 'regex:/^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$/'],
+            'hostname' => ['required', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {

@@ -129,19 +129,19 @@ const computerClass = computed(() => {
                         <div :class="statusRingClass"></div>
 
                         <!-- Computer content -->
-                        <div class="z-10 flex items-center justify-center">
-                            <span class="max-w-full truncate text-sm font-medium">{{ computer.name }}</span>
-                        </div>
+                        <!-- <div class="z-10 flex items-center justify-center">
+                            <span class="max-w-full truncate text-sm font-medium">{{ computer.hostname }}</span>
+                        </div> -->
                     </div>
                 </TooltipTrigger>
-                <TooltipContent v-if="computer.system_metrics" class="w-60 p-0" side="right">
+                <TooltipContent class="w-60 p-0" side="right" v-if="computer.status == 'online'">
                     <div class="rounded-md border bg-card text-card-foreground shadow-sm">
                         <div class="flex flex-col gap-2 p-3">
                             <!-- Header with computer name -->
                             <div class="flex items-center justify-between border-b pb-1">
-                                <h4 class="text-sm font-semibold">{{ computer.name }}</h4>
+                                <h4 class="text-sm font-semibold">{{ computer.hostname }}</h4>
                                 <span class="text-xs text-muted-foreground">
-                                    {{ computer.ip_address || 'No IP' }}
+                                    {{ computer.mac_address || 'No MAC' }}
                                 </span>
                             </div>
 
@@ -152,35 +152,45 @@ const computerClass = computed(() => {
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">CPU</span>
-                                            <span class="text-xs text-muted-foreground">{{ formatPercent(computer.system_metrics?.cpu_usage) }}</span>
+                                            <span class="text-xs text-muted-foreground">{{ `${computer.system_metrics?.cpu_usage} %` }}</span>
                                         </div>
-                                        <Progress class="h-1.5" :value="computer.system_metrics?.cpu_usage" />
+                                        <Progress class="h-1.5" :model-value="computer.system_metrics?.cpu_usage" />
                                     </div>
                                 </div>
 
                                 <!-- Memory Usage -->
-                                <div v-if="computer.system_metrics?.memory_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.system_metrics?.memory_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Memory</span>
                                             <span class="text-xs text-muted-foreground">{{
-                                                formatPercent(computer.system_metrics?.memory_usage)
+                                                `${((computer.system_metrics?.memory_used / computer.system_metrics?.memory_total) * 100).toFixed(1)} %`
                                             }}</span>
                                         </div>
-                                        <Progress class="h-1.5" :value="computer.system_metrics?.memory_usage" />
+                                        <Progress
+                                            class="h-1.5"
+                                            :model-value="
+                                                ((computer.system_metrics?.memory_used / computer.system_metrics?.memory_total) * 100).toFixed(1)
+                                            "
+                                        />
                                     </div>
                                 </div>
 
                                 <!-- Disk Usage -->
-                                <div v-if="computer.system_metrics?.disk_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.system_metrics?.disk_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Disk</span>
                                             <span class="text-xs text-muted-foreground">{{
-                                                formatPercent(computer.system_metrics?.disk_usage)
+                                                `${((computer.system_metrics?.disk_used / computer.system_metrics?.disk_total) * 100).toFixed(1)} %`
                                             }}</span>
                                         </div>
-                                        <Progress class="h-1.5" :value="computer.system_metrics?.disk_usage" />
+                                        <Progress
+                                            class="h-1.5"
+                                            :model-value="
+                                                ((computer.system_metrics?.disk_used / computer.system_metrics?.disk_total) * 100).toFixed(1)
+                                            "
+                                        />
                                     </div>
                                 </div>
 

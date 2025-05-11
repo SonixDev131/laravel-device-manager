@@ -14,8 +14,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('computer_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignUuid('room_id')->nullable()->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->text('command_type');
-            $table->jsonb('payload')->nullable();
+            $table->text('type');
+            $table->jsonb('params')->nullable();
             $table->text('status');
             $table->boolean('is_group_command')->default(false);
             $table->timestampTz('completed_at')->nullable();
