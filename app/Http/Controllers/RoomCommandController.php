@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\PublishCommandAction;
 use App\Http\Requests\PublishCommandRequest;
 use App\Models\Room;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 final class RoomCommandController extends Controller
@@ -18,7 +19,7 @@ final class RoomCommandController extends Controller
         Room $room,
         PublishCommandRequest $request,
         PublishCommandAction $action
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $result = $action->handle($room, $request->validated());
 
         if ($result) {

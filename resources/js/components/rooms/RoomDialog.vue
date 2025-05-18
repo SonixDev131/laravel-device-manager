@@ -32,7 +32,7 @@ defineEmits<{
 
 // Initialize form with proper typing
 const form = useForm({
-    name: props.isEdit && props.room ? props.room.name || '' : '',
+    hostname: props.isEdit && props.room ? props.room.hostname || '' : '',
     grid_rows: props.isEdit && props.room ? props.room.grid_rows || 5 : 5,
     grid_cols: props.isEdit && props.room ? props.room.grid_cols || 5 : 5,
 });
@@ -42,7 +42,7 @@ watch(
     () => props.room,
     (newRoom) => {
         if (newRoom && isOpen.value) {
-            form.name = newRoom.name || '';
+            form.hostname = newRoom.hostname || '';
             form.grid_rows = newRoom.grid_rows || 5;
             form.grid_cols = newRoom.grid_cols || 5;
         }

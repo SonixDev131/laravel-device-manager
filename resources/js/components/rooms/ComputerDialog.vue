@@ -34,8 +34,7 @@ const suggestedName = computed(() => {
 
 // Initialize form with proper typing
 const form = useForm({
-    name: '',
-    ip_address: '',
+    hostname: '',
     mac_address: '',
     status: 'operational',
     room_id: props.roomId,
@@ -45,8 +44,7 @@ const form = useForm({
 
 // Reset form when dialog closes
 const resetForm = () => {
-    form.name = '';
-    form.ip_address = '';
+    form.hostname = '';
     form.mac_address = '';
     form.status = 'operational';
     form.room_id = props.roomId;
@@ -88,8 +86,8 @@ watch(
 
 const onSubmit = () => {
     // Nếu tên trống, sử dụng tên đề xuất
-    if (!form.name) {
-        form.name = suggestedName.value;
+    if (!form.hostname) {
+        form.hostname = suggestedName.value;
     }
 
     form.post(route('rooms.computers.store', props.roomId), {
@@ -131,13 +129,13 @@ const onSubmit = () => {
 
                     <!-- Computer Name - Tự động đề xuất -->
                     <div class="grid gap-2">
-                        <Label for="name" class="flex items-center">
+                        <Label for="hostname" class="flex items-center">
                             <span>Computer Name</span>
                             <span class="ml-1 text-xs text-muted-foreground">(Optional)</span>
                         </Label>
-                        <Input id="name" type="text" :placeholder="suggestedName" v-model="form.name" :disabled="form.processing" />
+                        <Input id="hostname" type="text" :placeholder="suggestedName" v-model="form.hostname" :disabled="form.processing" />
                         <div class="text-xs text-muted-foreground">Leave empty to use "{{ suggestedName }}"</div>
-                        <InputError :message="form.errors.name" />
+                        <InputError :message="form.errors.hostname" />
                     </div>
 
                     <!-- IP Address Field - Tùy chọn -->

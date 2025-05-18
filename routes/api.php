@@ -12,5 +12,5 @@ Route::post('/agents/register', [AgentController::class, 'register']);
 // ->middleware('auth:sanctum');
 Route::post('/agent/upload', AgentUploadController::class)->name('upload');
 /* ->middleware('auth:sanctum'); */
-Route::post('/agent/latest', GetLatestVersionController::class)->name('latest');
-Route::post('/agent/update', AgentUpdateController::class)->name('update');
+Route::get('/agent/version', GetLatestVersionController::class)->name('version');
+Route::get('/agent/update/{version}', AgentUpdateController::class)->name('update');

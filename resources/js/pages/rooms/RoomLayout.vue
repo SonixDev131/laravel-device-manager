@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import CommandHistory from '@/components/rooms/CommandHistory.vue';
 import ControlBar from '@/components/rooms/ComputerControls.vue';
 import ComputerGrid from '@/components/rooms/ComputerGrid.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -115,6 +116,8 @@ const executeCommand = (commandType: CommandType) => {
                     @execute-command="executeCommand"
                     class="flex-grow"
                 />
+
+                <CommandHistory :room-id="room.data.id" />
             </div>
             <ComputerGrid
                 :room="room"

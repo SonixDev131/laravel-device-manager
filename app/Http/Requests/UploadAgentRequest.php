@@ -6,8 +6,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\File;
 
-final class StoreComputerRequest extends FormRequest
+class UploadAgentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,18 +21,13 @@ final class StoreComputerRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, array<int, string|ValidationRule|File>>
      */
     public function rules(): array
     {
         return [
-            'hostname' => 'required|string|max:255',
-            'ip_address' => 'nullable|ip',
-            'room_id' => 'required|exists:rooms,id',
-            'mac_address' => 'required|string|max:17',
-            'pos_row' => 'required|integer',
-            'pos_col' => 'required|integer',
-            'is_online' => 'sometimes|boolean',
+            'file' => ['required', 'file', File::types('zip')],
+            'version' => ['required', 'string', 'regex:/^\d+\.\d+\.\d+$/'],
         ];
     }
 }

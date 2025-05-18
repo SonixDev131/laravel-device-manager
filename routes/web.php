@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AgentsController;
 use App\Http\Controllers\RoomCommandController;
+use App\Http\Controllers\RoomCommandHistoryController;
 use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/rooms/{room}/commands', [RoomCommandController::class, 'publish'])->name('rooms.commands.publish');
 
+    Route::get('/rooms/{room}/commands', [RoomCommandHistoryController::class, 'index'])->name('rooms.commands.index');
+
     Route::post('/rooms/{room}/update-agents', [RoomController::class, 'updateAgents'])
         ->name('rooms.update-agents');
 
@@ -39,6 +42,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::middleware(['can:update-agents'])->group(function () {
     Route::get('/agents', [AgentsController::class, 'index'])->name('agents.index');
     Route::post('/agents/update-all', [AgentsController::class, 'updateAll'])->name('agents.update-all');
+    Route::post('/agents/upload-package', [AgentsController::class, 'uploadPackage'])->name('agents.upload-package');
+
     // });
 });
 

@@ -292,7 +292,7 @@ final class PublishCommandAction
             'type' => $commandType,
             'room_id' => $room->id,
             'status' => CommandStatus::PENDING,
-            'params' => $params,
+            // 'params' => $params,
         ]);
 
         // Check if RabbitMQ is available
@@ -316,7 +316,7 @@ final class PublishCommandAction
         $payload = [
             'command_id' => $command->id,
             'type' => $commandType->value,
-            'params' => $params,
+            // 'params' => $params,
             'timestamp' => time(),
             'room_id' => $room->id,
         ];

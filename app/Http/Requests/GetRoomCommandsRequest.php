@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\Agent;
+namespace App\Http\Requests;
 
-use App\Http\Requests\Api\FormRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Validation\Rules\File;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UploadAgentRequest extends FormRequest
+final class GetRoomCommandsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,13 +20,12 @@ class UploadAgentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, array<int, string|ValidationRule|File>>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', File::types('zip')],
-            'version' => ['required', 'string'],
+            // No specific validation rules needed for GET request
         ];
     }
 }

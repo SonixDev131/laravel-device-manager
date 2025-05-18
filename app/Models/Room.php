@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Carbon $updated_at When the room was last updated
  * @property-read Collection<int, Computer> $computers Computers in this room
  * @property-read int|null $computers_count
+ *
  * @method static \Database\Factories\RoomFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Room newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Room newQuery()
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Room whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Room whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Room whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 final class Room extends Model
@@ -46,5 +48,15 @@ final class Room extends Model
     public function computers(): HasMany
     {
         return $this->hasMany(Computer::class);
+    }
+
+    /**
+     * Get the commands that belong to this room
+     *
+     * @return HasMany<Command>
+     */
+    public function commands(): HasMany
+    {
+        return $this->hasMany(Command::class);
     }
 }

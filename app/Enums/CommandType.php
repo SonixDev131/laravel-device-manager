@@ -7,9 +7,9 @@ namespace App\Enums;
 enum CommandType: string
 {
     case LOCK = 'LOCK';
-    case UPDATE = 'agent.update';
-    case RESTART = 'agent.restart';
-    case SHUTDOWN = 'agent.shutdown';
-    case EXECUTE = 'agent.execute';
-    case STATUS = 'agent.status';
+    case UPDATE = 'UPDATE';
+    case RESTART = 'RESTART';
+    case SHUTDOWN = 'SHUTDOWN';
+    case EXECUTE = 'EXECUTE';
+    case STATUS = 'STATUS';
 }
