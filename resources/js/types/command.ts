@@ -8,4 +8,6 @@ export enum CommandType {
     LOG_OUT = 'LOG_OUT',
     UPDATE = 'UPDATE',
     CUSTOM = 'CUSTOM',
+    FIREWALL_ON = 'FIREWALL_ON',
+    FIREWALL_OFF = 'FIREWALL_OFF',
 }

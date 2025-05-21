@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Api\Agent\UploadAgentRequest;
+use App\Http\Requests\UploadAgentRequest;
 use App\Models\AgentPackage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;

@@ -43,6 +43,7 @@ final class RoomResource extends JsonResource
                             'platform' => $computer->latestMetric->platform,
                             'platform_version' => $computer->latestMetric->platform_version,
                             'hostname' => $computer->latestMetric->hostname,
+                            'firewall_status' => $computer->latestMetric->firewall_status,
                         ] : null,
                     ];
                 });

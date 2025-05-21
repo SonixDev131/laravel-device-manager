@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- *
- *
  * @property string $id
  * @property string $computer_id
  * @property float $cpu_usage
@@ -27,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Computer $computer
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric query()
@@ -43,11 +42,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric wherePlatformVersion($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Metric whereUptime($value)
+ *
  * @mixin \Eloquent
  */
 class Metric extends Model
 {
     use HasFactory, HasUuids;
+
+    protected $casts = [
+        'firewall_status' => 'array',
+    ];
 
     /** @return BelongsTo<Computer, $this>  */
     public function computer(): BelongsTo

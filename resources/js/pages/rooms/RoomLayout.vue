@@ -104,28 +104,34 @@ const executeCommand = (commandType: CommandType) => {
     <Head title="Room Layout" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-[calc(100svh-4rem)] flex-col gap-4 overflow-hidden p-4">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <ControlBar
-                    :selected-computers="selectedComputers"
-                    :total-computers="totalComputers"
-                    :room-id="room.data.id"
-                    v-model:commandMode="commandMode"
-                    @clear-selection="clearSelection"
-                    @select-all="selectAllComputers"
-                    @execute-command="executeCommand"
-                    class="flex-grow"
-                />
+        <div class="flex h-[calc(100svh-4rem)] flex-col overflow-hidden">
+            <!-- Full width control bar at top -->
+            <ControlBar
+                :selected-computers="selectedComputers"
+                :total-computers="totalComputers"
+                :room-id="room.data.id"
+                v-model:commandMode="commandMode"
+                @clear-selection="clearSelection"
+                @select-all="selectAllComputers"
+                @execute-command="executeCommand"
+                class="w-full"
+            />
 
+            <!-- Main content with computer grid -->
+            <div class="flex-1 overflow-hidden p-4">
+                <ComputerGrid
+                    :room="room"
+                    :selected-computers="selectedComputers"
+                    :commandMode="commandMode"
+                    @toggle-selection="toggleComputerSelection"
+                    class="h-full"
+                />
+            </div>
+
+            <!-- Command history button positioned at bottom right -->
+            <div class="fixed bottom-6 right-6 z-10">
                 <CommandHistory :room-id="room.data.id" />
             </div>
-            <ComputerGrid
-                :room="room"
-                :selected-computers="selectedComputers"
-                :commandMode="commandMode"
-                @toggle-selection="toggleComputerSelection"
-                class="flex-1"
-            />
         </div>
     </AppLayout>
 </template>

@@ -12,4 +12,6 @@ enum CommandType: string
     case SHUTDOWN = 'SHUTDOWN';
     case EXECUTE = 'EXECUTE';
     case STATUS = 'STATUS';
+    case FIREWALL_ON = 'FIREWALL_ON';
+    case FIREWALL_OFF = 'FIREWALL_OFF';
 }

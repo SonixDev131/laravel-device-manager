@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $type
  * @property string|null $params
  * @property string $status
+ * @property string|null $error
  * @property bool $is_group_command
  * @property string|null $completed_at
  * @property Carbon|null $created_at

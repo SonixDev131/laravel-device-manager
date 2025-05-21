@@ -6,4 +6,5 @@ export interface CommandHistoryItem {
     completed_at: string | null;
     target: string;
     is_group_command: boolean;
+    error?: string;
 }

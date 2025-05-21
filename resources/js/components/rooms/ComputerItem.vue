@@ -116,6 +116,31 @@ const computerClass = computed(() => {
 
     return baseClasses.join(' ');
 });
+
+const firewallProfiles = [
+    { key: 'Domain', label: 'Domain' },
+    { key: 'Private', label: 'Private' },
+    { key: 'Public', label: 'Public' },
+];
+
+const firewallStatus = computed(() => {
+    // Parse the JSON string if it's a string
+    const rawFirewallStatus = props.computer.system_metrics?.firewall_status;
+
+    // If it's a string, parse it to an object
+    const parsedFirewallStatus = typeof rawFirewallStatus === 'string' ? JSON.parse(rawFirewallStatus) : rawFirewallStatus;
+
+    return firewallProfiles.map((profile) => {
+        // Now use the parsed object
+        const value = parsedFirewallStatus?.[profile.key];
+
+        return {
+            ...profile,
+            value,
+            color: value === 'ON' ? 'bg-green-500' : value === 'OFF' ? 'bg-gray-300' : 'bg-yellow-400',
+        };
+    });
+});
 </script>
 
 <template>
@@ -134,7 +159,7 @@ const computerClass = computed(() => {
                         </div> -->
                     </div>
                 </TooltipTrigger>
-                <TooltipContent class="w-60 p-0" side="right" v-if="computer.status == 'online'">
+                <TooltipContent class="w-68 p-0" side="right" v-if="computer.status == 'online'">
                     <div class="rounded-md border bg-card text-card-foreground shadow-sm">
                         <div class="flex flex-col gap-2 p-3">
                             <!-- Header with computer name -->
@@ -198,6 +223,20 @@ const computerClass = computed(() => {
                                 <div class="mt-1 flex items-center justify-between border-t pt-1 text-xs">
                                     <span class="text-muted-foreground">Uptime: {{ formattedUptime }}</span>
                                     <span class="font-medium">{{ computer.system_metrics?.platform || 'Unknown OS' }}</span>
+                                </div>
+
+                                <!-- Firewall Status -->
+                                <div v-if="computer.system_metrics?.firewall_status" class="mt-2 border-t pt-2">
+                                    <div class="mb-1 text-xs font-medium text-muted-foreground">Firewall Status</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <div v-for="profile in firewallStatus" :key="profile.key" class="flex items-center gap-1">
+                                            <span class="inline-block h-2 w-2 rounded-full" :class="profile.color"></span>
+                                            <span class="text-xs">{{ profile.label }}</span>
+                                            <span class="text-xs font-semibold" :class="profile.value === 'ON' ? 'text-green-600' : 'text-gray-500'">
+                                                {{ profile.value || 'Unknown' }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

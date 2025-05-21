@@ -4,29 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Api\Agent\RegisterAgentRequest;
 use App\Models\Computer;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class AgentController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(RegisterAgentRequest $request): JsonResponse
     {
-        // Validate input
-        $validator = Validator::make($request->all(), [
-            'mac_address' => ['required', 'string', 'regex:/^([0-9A-Fa-f]{2}-){5}([0-9A-Fa-f]{2})$/'],
-            'hostname' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid input data'], 422);
-        }
-
-        $mac_address = $request->input('mac_address');
-        $hostname = $request->input('hostname');
+        $mac_address = $validated['mac_address'];
+        $hostname = $validated['hostname'];
 
         try {
             // So khớp MAC

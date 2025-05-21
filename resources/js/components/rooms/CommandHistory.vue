@@ -12,9 +12,10 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandHistoryItem } from '@/types/commandHistory';
 import axios from 'axios';
-import { History, Loader2, RefreshCw } from 'lucide-vue-next';
+import { AlertCircle, History, Loader2, RefreshCw } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -25,6 +26,8 @@ const commandHistory = ref<CommandHistoryItem[]>([]);
 const isLoading = ref<boolean>(false);
 const isOpen = ref<boolean>(false);
 const error = ref<string | null>(null);
+const selectedErrorMessage = ref<string | null>(null);
+const isErrorDialogOpen = ref<boolean>(false);
 
 // Format the date in a readable format
 const formatDate = (dateString: string) => {
@@ -85,16 +88,34 @@ const handleOpen = () => {
 const refreshHistory = () => {
     loadCommandHistory();
 };
+
+// Show error details dialog
+const showErrorDetails = (errorMessage: string) => {
+    selectedErrorMessage.value = errorMessage;
+    isErrorDialogOpen.value = true;
+};
 </script>
 
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogTrigger asChild @click="handleOpen">
-            <Button variant="outline" size="sm" class="h-9 gap-1">
-                <History class="h-4 w-4" />
-                <span>Command History</span>
-            </Button>
-        </DialogTrigger>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DialogTrigger asChild @click="handleOpen">
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            class="h-12 w-12 rounded-full bg-blue-600 shadow-lg transition-all duration-200 hover:scale-105 hover:bg-blue-700"
+                        >
+                            <History class="h-6 w-6 text-white" />
+                        </Button>
+                    </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>Command History</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
         <DialogContent class="sm:max-w-3xl">
             <DialogHeader>
                 <DialogTitle>Command History</DialogTitle>
@@ -128,11 +149,12 @@ const refreshHistory = () => {
                     <Table class="w-full text-sm">
                         <TableHeader>
                             <TableRow class="border-b hover:bg-transparent">
-                                <TableHead class="w-1/6 py-2">Type</TableHead>
-                                <TableHead class="w-1/6 py-2">Target</TableHead>
-                                <TableHead class="w-1/6 py-2">Status</TableHead>
-                                <TableHead class="w-1/5 py-2">Sent at</TableHead>
-                                <TableHead class="w-1/5 py-2">Completed</TableHead>
+                                <TableHead class="w-1/7 py-2">Type</TableHead>
+                                <TableHead class="w-1/7 py-2">Target</TableHead>
+                                <TableHead class="w-1/7 py-2">Status</TableHead>
+                                <TableHead class="w-1/7 py-2">Sent at</TableHead>
+                                <TableHead class="w-1/7 py-2">Completed</TableHead>
+                                <TableHead class="w-2/7 py-2">Error</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -154,6 +176,17 @@ const refreshHistory = () => {
                                     <span v-if="command.completed_at">{{ formatDate(command.completed_at) }}</span>
                                     <span v-else class="text-muted-foreground">-</span>
                                 </TableCell>
+                                <TableCell class="max-w-[200px] py-2">
+                                    <div v-if="command.status.toLowerCase() === 'failed' && command.error" class="flex items-center">
+                                        <span class="mr-2 truncate text-sm text-red-500" :title="command.error">
+                                            {{ command.error }}
+                                        </span>
+                                        <Button variant="ghost" size="icon" class="h-5 w-5 p-0" @click="showErrorDetails(command.error)">
+                                            <AlertCircle class="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    </div>
+                                    <span v-else class="text-muted-foreground">-</span>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -162,6 +195,29 @@ const refreshHistory = () => {
 
             <DialogFooter class="flex items-center justify-between">
                 <div class="text-xs text-muted-foreground">{{ commandHistory.length }} commands found</div>
+                <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Error Details Dialog -->
+    <Dialog v-model:open="isErrorDialogOpen">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2 text-red-600">
+                    <AlertCircle class="h-5 w-5" />
+                    Command Error Details
+                </DialogTitle>
+                <DialogDescription> The full error message for the failed command. </DialogDescription>
+            </DialogHeader>
+
+            <div class="mt-4 max-h-[40vh] overflow-auto rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
+                <pre class="whitespace-pre-wrap text-sm">{{ selectedErrorMessage }}</pre>
+            </div>
+
+            <DialogFooter class="sm:justify-end">
                 <DialogClose asChild>
                     <Button variant="outline">Close</Button>
                 </DialogClose>

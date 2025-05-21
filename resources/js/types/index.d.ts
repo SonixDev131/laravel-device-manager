@@ -71,7 +71,11 @@ export interface SystemMetrics {
     platform: string;
     platform_version: string;
     hostname: string;
-    [key: string]: any; // Allow for additional metrics
+    firewall_status: {
+        Domain: string;
+        Private: string;
+        Public: string;
+    };
 }
 
 export enum ComputerStatus {

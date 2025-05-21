@@ -1,21 +1,26 @@
 <script lang="ts" setup>
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
     CheckSquareIcon,
-    ChevronsDownIcon,
     ComputerIcon,
-    DownloadIcon,
+    ExternalLinkIcon,
+    EyeIcon,
     ImageIcon,
     LockIcon,
     LogOutIcon,
     MessageSquareIcon,
+    MonitorIcon,
+    PanelLeftIcon,
+    PanelRightIcon,
+    PlayIcon,
     PowerIcon,
     PowerOffIcon,
     RefreshCwIcon,
+    ShieldIcon,
+    ShieldOffIcon,
     XIcon,
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
@@ -66,19 +71,21 @@ const isSelectionEmpty = computed(() => {
 
 // Map commands to descriptions
 const commandDescriptions: Record<CommandType, string> = {
-    SHUTDOWN: 'Shutdown selected computers',
-    RESTART: 'Restart selected computers',
+    SHUTDOWN: 'Power down selected computers',
+    RESTART: 'Reboot selected computers',
     LOG_OUT: 'Log out users from selected computers',
     LOCK: 'Lock selected computers',
-    MESSAGE: 'Send message to selected computers',
+    MESSAGE: 'Send text message to selected computers',
     SCREENSHOT: 'Take screenshot of selected computers',
     UPDATE: 'Update agent on selected computers',
-    CUSTOM: 'Execute custom command',
+    CUSTOM: 'Run program on selected computers',
+    FIREWALL_ON: 'Enable firewall on selected computers',
+    FIREWALL_OFF: 'Disable firewall on selected computers',
 };
 
 // Handle command with confirmation for critical commands
 const handleCommand = (command: CommandType) => {
-    const criticalCommands = [CommandType.SHUTDOWN, CommandType.RESTART, CommandType.LOG_OUT];
+    const criticalCommands = [CommandType.SHUTDOWN, CommandType.RESTART, CommandType.LOG_OUT, CommandType.FIREWALL_ON, CommandType.FIREWALL_OFF];
 
     // Update description based on current mode
     const baseDescription = commandDescriptions[command] || 'Execute command';
@@ -109,11 +116,11 @@ const cancelCommand = () => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 rounded-md border border-border bg-card p-4 shadow-sm">
-        <!-- Selection controls row with consistent height -->
-        <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="z-10 flex flex-col bg-gray-800 shadow-md">
+        <!-- Selection controls row styled like Veyon -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-gray-800 p-2 shadow-sm">
             <div class="flex items-center gap-2">
-                <Badge :variant="commandMode === 'all' ? 'default' : 'outline'" class="h-8 transition-colors">
+                <Badge :variant="commandMode === 'all' ? 'default' : 'outline'" class="h-8 text-white transition-colors">
                     <ComputerIcon v-if="commandMode === 'all'" class="mr-1 h-3.5 w-3.5" />
                     {{ selectionText }}
                 </Badge>
@@ -131,88 +138,206 @@ const cancelCommand = () => {
                 </div>
             </div>
 
-            <!-- Thay đổi từ v-model:modelValue thành v-model -->
+            <!-- Veyon-style selection mode -->
             <RadioGroup v-model:modelValue="commandMode" class="flex gap-4">
                 <div class="flex items-center space-x-2">
                     <RadioGroupItem id="selected" value="selected" />
-                    <Label for="selected">Manual Selection</Label>
+                    <Label for="selected" class="text-white">Manual Selection</Label>
                 </div>
                 <div class="flex items-center space-x-2">
                     <RadioGroupItem id="all" value="all" />
-                    <Label for="all">Broadcast to All</Label>
+                    <Label for="all" class="text-white">Broadcast to All</Label>
                 </div>
             </RadioGroup>
         </div>
 
-        <!-- Commands section -->
-        <div class="space-y-4">
-            <!-- Quick access common commands with consistent button height -->
-            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.LOCK)">
-                    <LockIcon class="mr-2 h-4 w-4" />
-                    Lock
-                </Button>
-
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.MESSAGE)">
-                    <MessageSquareIcon class="mr-2 h-4 w-4" />
-                    Message
-                </Button>
-
+        <!-- Commands section - Veyon-style toolbar -->
+        <div>
+            <!-- Control bar with all command buttons in a grid -->
+            <div class="md:grid-cols-14 grid grid-cols-7 gap-1 border-t border-gray-700 bg-gray-800 p-1 sm:grid-cols-7">
+                <!-- Monitoring -->
                 <Button
-                    class="h-10 flex-1 justify-start"
-                    variant="outline"
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <MonitorIcon class="h-6 w-6 text-lime-500" />
+                    <span class="text-xs text-white">Monitoring</span>
+                </Button>
+
+                <!-- Fullscreen demo -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <PanelLeftIcon class="h-6 w-6 text-orange-500" />
+                    <span class="text-xs text-white">Fullscreen demo</span>
+                </Button>
+
+                <!-- Window demo -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <PanelRightIcon class="h-6 w-6 text-purple-500" />
+                    <span class="text-xs text-white">Window demo</span>
+                </Button>
+
+                <!-- Lock -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.LOCK)"
+                >
+                    <LockIcon class="h-6 w-6 text-purple-600" />
+                    <span class="text-xs text-white">Lock</span>
+                </Button>
+
+                <!-- Remote view -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <EyeIcon class="h-6 w-6 text-sky-500" />
+                    <span class="text-xs text-white">Remote view</span>
+                </Button>
+
+                <!-- Remote control -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <ComputerIcon class="h-6 w-6 text-blue-500" />
+                    <span class="text-xs text-white">Remote control</span>
+                </Button>
+
+                <!-- Power on -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <PowerIcon class="h-6 w-6 text-green-500" />
+                    <span class="text-xs text-white">Power on</span>
+                </Button>
+
+                <!-- Reboot -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.RESTART)"
+                >
+                    <RefreshCwIcon class="h-6 w-6 text-blue-500" />
+                    <span class="text-xs text-white">Reboot</span>
+                </Button>
+
+                <!-- Power down -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.SHUTDOWN)"
+                >
+                    <PowerOffIcon class="h-6 w-6 text-red-500" />
+                    <span class="text-xs text-white">Power down</span>
+                </Button>
+
+                <!-- Logout user -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.LOG_OUT)"
+                >
+                    <LogOutIcon class="h-6 w-6 text-blue-400" />
+                    <span class="text-xs text-white">Logout user</span>
+                </Button>
+
+                <!-- Text message -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.MESSAGE)"
+                >
+                    <MessageSquareIcon class="h-6 w-6 text-blue-400" />
+                    <span class="text-xs text-white">Text message</span>
+                </Button>
+
+                <!-- Run program -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.CUSTOM)"
+                >
+                    <PlayIcon class="h-6 w-6 text-gray-300" />
+                    <span class="text-xs text-white">Run program</span>
+                </Button>
+
+                <!-- Open website -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                >
+                    <ExternalLinkIcon class="h-6 w-6 text-blue-400" />
+                    <span class="text-xs text-white">Open website</span>
+                </Button>
+
+                <!-- Screenshot -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
                     :disabled="isSelectionEmpty"
                     @click="handleCommand(CommandType.SCREENSHOT)"
                 >
-                    <ImageIcon class="mr-2 h-4 w-4" />
-                    Screenshot
+                    <ImageIcon class="h-6 w-6 text-blue-500" />
+                    <span class="text-xs text-white">Screenshot</span>
                 </Button>
 
-                <!-- Power controls dropdown with consistent height -->
-                <DropdownMenu>
-                    <DropdownMenuTrigger as="div">
-                        <Button class="h-10 w-full flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty">
-                            <PowerIcon class="mr-2 h-4 w-4" />
-                            Power
-                            <ChevronsDownIcon class="ml-auto h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem @click="handleCommand(CommandType.SHUTDOWN)" class="text-destructive">
-                            <PowerOffIcon class="mr-2 h-4 w-4" />
-                            Shutdown
-                        </DropdownMenuItem>
-                        <DropdownMenuItem @click="handleCommand(CommandType.RESTART)">
-                            <RefreshCwIcon class="mr-2 h-4 w-4" />
-                            Restart
-                        </DropdownMenuItem>
-                        <DropdownMenuItem @click="handleCommand(CommandType.LOG_OUT)">
-                            <LogOutIcon class="mr-2 h-4 w-4" />
-                            Logout
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <!-- Firewall On -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.FIREWALL_ON)"
+                >
+                    <ShieldIcon class="h-6 w-6 text-green-500" />
+                    <span class="text-xs text-white">Firewall On</span>
+                </Button>
 
-                <!-- Maintenance commands -->
-                <Button class="h-10 flex-1 justify-start" variant="outline" :disabled="isSelectionEmpty" @click="handleCommand(CommandType.UPDATE)">
-                    <DownloadIcon class="mr-2 h-4 w-4" />
-                    Update
+                <!-- Firewall Off -->
+                <Button
+                    class="h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-700"
+                    variant="ghost"
+                    :disabled="isSelectionEmpty"
+                    @click="handleCommand(CommandType.FIREWALL_OFF)"
+                >
+                    <ShieldOffIcon class="h-6 w-6 text-red-500" />
+                    <span class="text-xs text-white">Firewall Off</span>
                 </Button>
             </div>
         </div>
 
-        <!-- Confirmation dialog with backdrop blur for better focus -->
+        <!-- Veyon-style right-click menu simulation -->
         <div
             v-if="showConfirmation"
             class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-all"
             @click.self="cancelCommand"
         >
-            <div class="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg animate-in fade-in-50 zoom-in-95">
+            <div class="w-full max-w-sm rounded-lg border bg-gray-800 p-6 text-white shadow-lg animate-in fade-in-50 zoom-in-95">
                 <h3 class="text-lg font-semibold">Confirm Action</h3>
-                <p class="mt-2 text-muted-foreground">{{ commandDescription }}</p>
+                <p class="mt-2 text-gray-300">{{ commandDescription }}</p>
 
                 <div class="mt-4 flex justify-end space-x-2">
-                    <Button variant="outline" @click="cancelCommand">Cancel</Button>
+                    <Button variant="outline" @click="cancelCommand" class="border-gray-600 text-white hover:bg-gray-700">Cancel</Button>
                     <Button variant="destructive" @click="confirmCommand">Confirm</Button>
                 </div>
             </div>

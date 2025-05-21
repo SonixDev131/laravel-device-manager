@@ -10,4 +10,5 @@ enum CommandStatus: string
     case IN_PROGRESS = 'in_progress';
     case SENT = 'sent';
     case FAILED = 'failed';
+    case COMPLETED = 'completed';
 }

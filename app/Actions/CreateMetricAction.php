@@ -31,7 +31,12 @@ final class CreateMetricAction
      *     uptime: int,
      *     platform: string,
      *     platform_version: string,
-     *     hostname: string
+     *     hostname: string,
+     *     firewall_status: array{
+     *       Domain: string,
+     *       Private: string,
+     *       Public: string,
+     *     },
      *   }
      * } $data The metric data
      * @return Metric|null The created metric or null if creation failed
@@ -57,6 +62,7 @@ final class CreateMetricAction
                 'disk_total' => $data['metrics']['disk_total'],
                 'disk_used' => $data['metrics']['disk_used'],
                 'uptime' => $data['metrics']['uptime'],
+                'firewall_status' => json_encode($data['metrics']['firewall_status'], JSON_FORCE_OBJECT),
             ]);
 
             // Update the associated computer's status and metrics
@@ -71,6 +77,8 @@ final class CreateMetricAction
                     'computer_id' => $data['computer_id'],
                 ]);
             }
+
+            Log::info('firewall_status received', ['firewall_status' => $data['metrics']['firewall_status']]);
 
             return $metric;
         } catch (Throwable $e) {
@@ -102,6 +110,7 @@ final class CreateMetricAction
             'platform',
             'platform_version',
             'hostname',
+            'firewall_status',
         ];
 
         // Check required top-level keys

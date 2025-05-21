@@ -30,6 +30,7 @@ final class RoomCommandHistoryController extends Controller
                 'completed_at' => $command->completed_at,
                 'target' => $command->computer ? $command->computer->hostname : 'Room',
                 'is_group_command' => $command->is_group_command,
+                'error' => $command->error,
             ]);
 
         return response()->json(['data' => $commands]);
