@@ -77,6 +77,6 @@ final class Computer extends Model
     /** @return HasOne<Metric, $this> */
     public function latestMetric(): HasOne
     {
-        return $this->hasOne(Metric::class)->latest();
+        return $this->hasOne(Metric::class)->latest()->limit(1);
     }
 }

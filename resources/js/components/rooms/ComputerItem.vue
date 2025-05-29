@@ -49,7 +49,7 @@ const statusTextClass = computed(() => {
 
 // Format uptime in a human-readable way (e.g., "2 days 3 hours")
 const formattedUptime = computed(() => {
-    const uptime = props.computer.system_metrics?.uptime;
+    const uptime = props.computer.latest_metric?.uptime;
     if (!uptime) return 'Unknown';
 
     const days = Math.floor(uptime / 86400);
@@ -125,7 +125,7 @@ const firewallProfiles = [
 
 const firewallStatus = computed(() => {
     // Parse the JSON string if it's a string
-    const rawFirewallStatus = props.computer.system_metrics?.firewall_status;
+    const rawFirewallStatus = props.computer.latest_metric?.firewall_status;
 
     // If it's a string, parse it to an object
     const parsedFirewallStatus = typeof rawFirewallStatus === 'string' ? JSON.parse(rawFirewallStatus) : rawFirewallStatus;
@@ -173,48 +173,46 @@ const firewallStatus = computed(() => {
                             <!-- Metrics section -->
                             <div class="space-y-2">
                                 <!-- CPU Usage -->
-                                <div v-if="computer.system_metrics?.cpu_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.latest_metric?.cpu_usage !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">CPU</span>
-                                            <span class="text-xs text-muted-foreground">{{ `${computer.system_metrics?.cpu_usage} %` }}</span>
+                                            <span class="text-xs text-muted-foreground">{{ `${computer.latest_metric?.cpu_usage} %` }}</span>
                                         </div>
-                                        <Progress class="h-1.5" :model-value="computer.system_metrics?.cpu_usage" />
+                                        <Progress class="h-1.5" :model-value="computer.latest_metric?.cpu_usage" />
                                     </div>
                                 </div>
 
                                 <!-- Memory Usage -->
-                                <div v-if="computer.system_metrics?.memory_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.latest_metric?.memory_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Memory</span>
                                             <span class="text-xs text-muted-foreground">{{
-                                                `${((computer.system_metrics?.memory_used / computer.system_metrics?.memory_total) * 100).toFixed(1)} %`
+                                                `${((computer.latest_metric?.memory_used / computer.latest_metric?.memory_total) * 100).toFixed(1)} %`
                                             }}</span>
                                         </div>
                                         <Progress
                                             class="h-1.5"
                                             :model-value="
-                                                ((computer.system_metrics?.memory_used / computer.system_metrics?.memory_total) * 100).toFixed(1)
+                                                ((computer.latest_metric?.memory_used / computer.latest_metric?.memory_total) * 100).toFixed(1)
                                             "
                                         />
                                     </div>
                                 </div>
 
                                 <!-- Disk Usage -->
-                                <div v-if="computer.system_metrics?.disk_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
+                                <div v-if="computer.latest_metric?.disk_used !== undefined" class="grid grid-cols-[1fr_auto] items-center gap-2">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium">Disk</span>
                                             <span class="text-xs text-muted-foreground">{{
-                                                `${((computer.system_metrics?.disk_used / computer.system_metrics?.disk_total) * 100).toFixed(1)} %`
+                                                `${((computer.latest_metric?.disk_used / computer.latest_metric?.disk_total) * 100).toFixed(1)} %`
                                             }}</span>
                                         </div>
                                         <Progress
                                             class="h-1.5"
-                                            :model-value="
-                                                ((computer.system_metrics?.disk_used / computer.system_metrics?.disk_total) * 100).toFixed(1)
-                                            "
+                                            :model-value="((computer.latest_metric?.disk_used / computer.latest_metric?.disk_total) * 100).toFixed(1)"
                                         />
                                     </div>
                                 </div>
@@ -222,11 +220,11 @@ const firewallStatus = computed(() => {
                                 <!-- Uptime + Platform -->
                                 <div class="mt-1 flex items-center justify-between border-t pt-1 text-xs">
                                     <span class="text-muted-foreground">Uptime: {{ formattedUptime }}</span>
-                                    <span class="font-medium">{{ computer.system_metrics?.platform || 'Unknown OS' }}</span>
+                                    <span class="font-medium">{{ computer.latest_metric?.platform || 'Unknown OS' }}</span>
                                 </div>
 
                                 <!-- Firewall Status -->
-                                <div v-if="computer.system_metrics?.firewall_status" class="mt-2 border-t pt-2">
+                                <div v-if="computer.latest_metric?.firewall_status" class="mt-2 border-t pt-2">
                                     <div class="mb-1 text-xs font-medium text-muted-foreground">Firewall Status</div>
                                     <div class="flex flex-wrap gap-2">
                                         <div v-for="profile in firewallStatus" :key="profile.key" class="flex items-center gap-1">

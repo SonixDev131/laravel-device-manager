@@ -73,12 +73,10 @@ final class RoomController extends Controller
      */
     public function show(Room $room): Response
     {
-        $room->load([
-            'computers.latestMetric', // Use a dedicated relationship
-        ]);
+        $room->load('computers.latestMetric');
 
         return Inertia::render('rooms/RoomLayout', [
-            'room' => RoomResource::make($room),
+            'room' => $room,
         ]);
     }
 
@@ -87,7 +85,7 @@ final class RoomController extends Controller
      *
      * @throws ValidationException
      */
-    public function import(Request $request)
+    public function import(Request $request): RedirectResponse
     {
         $request->validate([
             'jsonFile' => 'required|file|mimes:json',
@@ -97,8 +95,6 @@ final class RoomController extends Controller
             $file = $request->file('jsonFile');
             $contents = $file->get();
             $data = json_decode($contents, true);
-
-            debug($data);
 
             foreach ($data['rooms'] as $roomData) {
                 $room = Room::updateOrCreate(
@@ -123,7 +119,7 @@ final class RoomController extends Controller
         } catch (Exception $e) {
             Log::error("Lỗi import file: {$e->getMessage()}");
 
-            return response()->json(['error' => 'Lỗi import file'], 500);
+            return redirect()->back()->with('error', 'Lỗi import file');
         }
     }
 }

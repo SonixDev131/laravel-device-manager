@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AgentsController;
+use App\Http\Controllers\RoomBlockedWebsitesController;
 use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomCommandHistoryController;
 use App\Http\Controllers\RoomComputerController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/rooms/{room}/commands', [RoomCommandHistoryController::class, 'index'])->name('rooms.commands.index');
 
+    Route::get('/rooms/{room}/blocked-websites', [RoomBlockedWebsitesController::class, 'index'])->name('rooms.blocked-websites.index');
+
     Route::post('/rooms/{room}/update-agents', [RoomController::class, 'updateAgents'])
         ->name('rooms.update-agents');
 
@@ -43,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/agents', [AgentsController::class, 'index'])->name('agents.index');
     Route::post('/agents/update-all', [AgentsController::class, 'updateAll'])->name('agents.update-all');
     Route::post('/agents/upload-package', [AgentsController::class, 'uploadPackage'])->name('agents.upload-package');
+    Route::delete('/agents/packages/{package}', [AgentsController::class, 'deletePackage'])->name('agents.packages.delete');
+    Route::post('/agents/upload-installer', [AgentsController::class, 'uploadInstaller'])->name('agents.upload-installer');
+    Route::post('/agents/installers/{installer}/broadcast', [AgentsController::class, 'broadcastInstaller'])->name('agents.installers.broadcast');
+    Route::delete('/agents/installers/{installer}', [AgentsController::class, 'deleteInstaller'])->name('agents.installers.delete');
 
     // });
 });

@@ -10,4 +10,5 @@ export enum CommandType {
     CUSTOM = 'CUSTOM',
     FIREWALL_ON = 'FIREWALL_ON',
     FIREWALL_OFF = 'FIREWALL_OFF',
+    BLOCK_WEBSITE = 'BLOCK_WEBSITE',
 }

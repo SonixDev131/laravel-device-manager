@@ -19,23 +19,19 @@ class AgentCommandResultController extends Controller
         $validated = $request->validated();
         $command_id = $validated['command_id'];
         $completed_at = $validated['completed_at'];
-        $error = $validated['error'];
+        $error = $validated['error'] ?? null;
+        $output = $validated['output'] ?? null;
 
-        $command = Command::findOrFail($command_id);
-
-        if ($error) {
-            $command->update([
+        Command::updateOrInsert(
+            ['id' => $command_id],
+            [
                 'completed_at' => $completed_at,
                 'error' => $error,
-                'status' => CommandStatus::FAILED,
-            ]);
-        } else {
-            $command->update([
-                'completed_at' => $completed_at,
-                'status' => CommandStatus::COMPLETED,
-            ]);
-        }
+                'output' => $output,
+                'status' => $error ? CommandStatus::FAILED : CommandStatus::COMPLETED,
+            ]
+        );
 
-        return response()->json(['message' => 'Command result received']);
+        return response()->json(['message' => 'Command result updated']);
     }
 }

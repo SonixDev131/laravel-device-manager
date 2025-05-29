@@ -1,14 +1,16 @@
 <script lang="ts" setup>
+import BlockedWebsites from '@/components/rooms/BlockedWebsites.vue';
 import CommandHistory from '@/components/rooms/CommandHistory.vue';
 import ControlBar from '@/components/rooms/ComputerControls.vue';
 import ComputerGrid from '@/components/rooms/ComputerGrid.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Computer, Room, type BreadcrumbItem, type CommandType } from '@/types';
+import { Computer, Room, type BreadcrumbItem } from '@/types';
+import { CommandType } from '@/types/command';
 import { Head, router, usePoll } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 // -> use to polling your server for new information on the current page
-usePoll(30000);
+usePoll(3000);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,17 +24,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const props = defineProps<{
-    room: {
-        data: Room;
-    };
+    room: Room;
 }>();
 
 // State management (moved from store)
 const selectedComputers = ref<string[]>([]);
 // Thêm ref cho chế độ điều khiển
 const commandMode = ref<'selected' | 'all'>('selected');
+// Ref for ControlBar to access its methods
+const controlBarRef = ref<any>(null);
 // Computed properties
-const totalComputers = computed(() => props.room.data.computers?.length || 0);
+const totalComputers = computed(() => props.room.computers?.length || 0);
 
 // Computer selection methods
 const clearSelection = () => {
@@ -40,8 +42,8 @@ const clearSelection = () => {
 };
 
 const selectAllComputers = () => {
-    if (!props.room.data.computers?.length) return;
-    selectedComputers.value = props.room.data.computers.map((computer: Computer) => computer.id);
+    if (!props.room.computers?.length) return;
+    selectedComputers.value = props.room.computers.map((computer: Computer) => computer.id);
 };
 
 const toggleComputerSelection = (computerId: string) => {
@@ -53,48 +55,62 @@ const toggleComputerSelection = (computerId: string) => {
     }
 };
 
+// Method to show the block website dialog
+const showBlockDialog = (urls?: string[]) => {
+    if (controlBarRef.value) {
+        controlBarRef.value.showBlockDialog(urls);
+    }
+};
+
 // Command execution
-const executeCommand = (commandType: CommandType) => {
+const executeCommand = (commandType: CommandType, payload?: any) => {
     console.log(`Executing ${commandType} on computers:`, commandMode.value === 'all' ? 'all computers' : selectedComputers.value);
+
+    // Base command data
+    const commandData: any = {
+        command_type: commandType,
+    };
+
+    // Add payload data if provided (for commands like BLOCK_WEBSITE)
+    if (payload) {
+        commandData.payload = payload;
+    }
 
     if (commandMode.value === 'selected') {
         // Kiểm tra nếu không có máy nào được chọn
         if (selectedComputers.value.length === 0) return;
 
         if (selectedComputers.value.length === 1) {
+            commandData.target_type = 'single';
+            commandData.computer_id = selectedComputers.value[0];
+
+            console.log('executeCommand', commandData);
             router.post(
                 route('rooms.commands.publish', {
-                    room: props.room.data.id,
+                    room: props.room.id,
                 }),
-                {
-                    command_type: commandType,
-                    target_type: 'single',
-                    computer_id: selectedComputers.value[0],
-                },
+                commandData,
             );
         } else {
+            commandData.target_type = 'group';
+            commandData.computer_ids = selectedComputers.value;
+
             router.post(
                 route('rooms.commands.publish', {
-                    room: props.room.data.id,
+                    room: props.room.id,
                 }),
-                {
-                    command_type: commandType,
-                    target_type: 'group',
-                    computer_ids: selectedComputers.value,
-                },
+                commandData,
             );
         }
     } else {
         // Gửi lệnh đến toàn bộ phòng
+        commandData.target_type = 'all';
+
         router.post(
             route('rooms.commands.publish', {
-                room: props.room.data.id,
+                room: props.room.id,
             }),
-            {
-                command_type: commandType,
-                target_type: 'all',
-                // Không cần computer_ids - backend sẽ hiểu là toàn bộ phòng
-            },
+            commandData,
         );
     }
 };
@@ -107,13 +123,15 @@ const executeCommand = (commandType: CommandType) => {
         <div class="flex h-[calc(100svh-4rem)] flex-col overflow-hidden">
             <!-- Full width control bar at top -->
             <ControlBar
+                ref="controlBarRef"
                 :selected-computers="selectedComputers"
                 :total-computers="totalComputers"
-                :room-id="room.data.id"
+                :room-id="room.id"
                 v-model:commandMode="commandMode"
                 @clear-selection="clearSelection"
                 @select-all="selectAllComputers"
                 @execute-command="executeCommand"
+                @show-block-dialog="showBlockDialog"
                 class="w-full"
             />
 
@@ -129,8 +147,9 @@ const executeCommand = (commandType: CommandType) => {
             </div>
 
             <!-- Command history button positioned at bottom right -->
-            <div class="fixed bottom-6 right-6 z-10">
-                <CommandHistory :room-id="room.data.id" />
+            <div class="fixed bottom-6 right-6 z-10 flex flex-col gap-4">
+                <BlockedWebsites :room-id="room.id" @block-website="(urls) => showBlockDialog(urls)" />
+                <CommandHistory :room-id="room.id" />
             </div>
         </div>
     </AppLayout>

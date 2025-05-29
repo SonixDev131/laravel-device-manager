@@ -32,7 +32,25 @@ final class PublishCommandRequest extends FormRequest
             'computer_id' => ['required_if:target_type,single', 'string', 'exists:computers,id'],
             'computer_ids' => ['required_if:target_type,group', 'array'],
             'computer_ids.*' => ['string', 'exists:computers,id'],
-            'params' => ['sometimes', 'array'],
+            'payload' => ['sometimes', 'array'],
+            'payload.urls' => ['required_if:command_type,BLOCK_WEBSITE', 'array'],
+            'payload.urls.*' => ['string', 'regex:/^([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(\/[a-zA-Z0-9-._~:\/?#[\]@!$&\'()*+,;=]*)?$/'],
+            'payload.name' => ['required_if:command_type,CUSTOM', 'string'],
+            'payload.args' => ['required_if:command_type,CUSTOM', 'string'],
+
+        ];
+    }
+
+    /**
+     * Get custom validation messages
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'payload.urls.required_if' => 'Website URLs are required for the block website command',
+            'payload.urls.*.regex' => 'Invalid website format. Enter domain names without http:// or https:// (e.g., example.com)',
         ];
     }
 }

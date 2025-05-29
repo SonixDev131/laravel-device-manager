@@ -9,6 +9,7 @@ use App\Http\Requests\PublishCommandRequest;
 use App\Models\Room;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 final class RoomCommandController extends Controller
 {
@@ -20,6 +21,7 @@ final class RoomCommandController extends Controller
         PublishCommandRequest $request,
         PublishCommandAction $action
     ): RedirectResponse|JsonResponse {
+        Log::info('PublishCommandController', $request->validated());
         $result = $action->handle($room, $request->validated());
 
         if ($result) {

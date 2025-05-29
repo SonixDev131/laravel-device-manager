@@ -7,9 +7,7 @@ import { computed, ref } from 'vue';
 import ComputerItem from './ComputerItem.vue';
 
 const props = defineProps<{
-    room: {
-        data: Room;
-    };
+    room: Room;
     selectedComputers: string[];
     commandMode: 'selected' | 'all';
 }>();
@@ -28,17 +26,17 @@ const emit = defineEmits<{
 const gridCells = computed(() => {
     const cells = [];
 
-    for (let row = 1; row <= props.room.data.grid_rows; row++) {
+    for (let row = 1; row <= props.room.grid_rows; row++) {
         const rowCells = [];
-        for (let col = 1; col <= props.room.data.grid_cols; col++) {
+        for (let col = 1; col <= props.room.grid_cols; col++) {
             // Find if a computer exists at this position
-            const computer = props.room.data.computers?.find((m) => m.pos_row === row && m.pos_col === col);
+            const computer = props.room.computers?.find((m) => m.pos_row === row && m.pos_col === col);
 
             rowCells.push({
                 row,
                 col,
                 computer,
-                index: (row - 1) * props.room.data.grid_cols + col, // Calculate linear index for key prop
+                index: (row - 1) * props.room.grid_cols + col, // Calculate linear index for key prop
             });
         }
         cells.push(rowCells);
@@ -79,7 +77,7 @@ const closeComputerDialog = () => {
 
 // Display room dimensions info
 const roomInfo = computed(() => {
-    return `${props.room.data.grid_rows} × ${props.room.data.grid_cols} grid`;
+    return `${props.room.grid_rows} × ${props.room.grid_cols} grid`;
 });
 </script>
 
@@ -89,15 +87,15 @@ const roomInfo = computed(() => {
         <!-- Room information header -->
         <div class="flex items-center justify-between border-b bg-muted/40 px-4 py-2">
             <h3 class="text-sm font-medium text-muted-foreground">
-                {{ room.data.name || 'Room Layout' }} <span class="ml-2 text-xs">({{ roomInfo }})</span>
+                {{ room.name || 'Room Layout' }} <span class="ml-2 text-xs">({{ roomInfo }})</span>
             </h3>
-            <span class="text-xs text-muted-foreground">{{ room.data.computers?.length || 0 }} computers</span>
+            <span class="text-xs text-muted-foreground">{{ room.computers?.length || 0 }} computers</span>
         </div>
 
         <!-- Scrollable grid container with contained height -->
         <ScrollArea class="grid h-[calc(100vh-12rem)] place-content-center p-4">
             <div class="flex min-h-full items-center justify-center">
-                <div class="grid auto-rows-min gap-6" :style="{ gridTemplateColumns: `repeat(${room.data.grid_cols}, minmax(80px, 1fr))` }">
+                <div class="grid auto-rows-min gap-6" :style="{ gridTemplateColumns: `repeat(${room.grid_cols}, minmax(80px, 1fr))` }">
                     <!-- Iterate through each row in our computed grid -->
                     <template v-for="row in gridCells" :key="row[0].row">
                         <!-- Iterate through each cell in the current row -->
@@ -140,7 +138,7 @@ const roomInfo = computed(() => {
             :form-id="computerDialogFormId"
             v-model:is-open="isComputerDialogOpen"
             :position="selectedPosition"
-            :room-id="room.data.id"
+            :room-id="room.id"
             @close="closeComputerDialog"
         />
     </div>

@@ -19,7 +19,41 @@
     - Params: `{ "target": "system" }` hoặc `{ "target": "application", "name": "chrome" }`
 
 5. **EXECUTE**: Thực thi lệnh/script
+
     - Params: `{ "command": "ipconfig /flushdns", "shell": "cmd" }`
+
+6. **FIREWALL_ON**: Bật tường lửa
+
+    - Params: `{ "profile": "all" }` (Tùy chọn, mặc định là tất cả)
+
+7. **FIREWALL_OFF**: Tắt tường lửa
+
+    - Params: `{ "profile": "all" }` (Tùy chọn, mặc định là tất cả)
+
+8. **BLOCK_WEBSITE**: Chặn các trang web
+    - Params: `{ "urls": ["facebook.com", "twitter.com"] }`
+    - Yêu cầu: Định dạng URL không có protocol (http/https)
+    - Mô tả: Chặn truy cập đến các trang web chỉ định trên tất cả các máy tính trong phòng.
+      Người dùng có thể xem danh sách các trang web bị chặn thông qua sidebar bên phải giao diện.
+
+9. **LOCK**: Khóa máy tính
+
+    - Không yêu cầu tham số
+
+10. **LOG_OUT**: Đăng xuất người dùng
+
+    - Params: `{ "force": false }` (Tùy chọn)
+
+11. **MESSAGE**: Gửi tin nhắn đến máy tính
+
+    - Params: `{ "message": "Nội dung tin nhắn", "title": "Tiêu đề" }`
+
+12. **SCREENSHOT**: Chụp ảnh màn hình
+
+    - Params: `{ "save_locally": true }` (Tùy chọn)
+
+13. **CUSTOM**: Thực thi chương trình tùy chỉnh
+    - Params: `{ "program": "notepad.exe", "args": "C:\\file.txt" }`
 
 ## 2. Xử lý lỗi và phục hồi
 

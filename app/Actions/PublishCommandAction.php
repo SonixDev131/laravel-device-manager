@@ -30,21 +30,25 @@ final class PublishCommandAction
      * @param  array{
      *   command_type: \App\Enums\CommandType,
      *   target_type: 'single'|'group'|'all',
-     *   computer_id: string,
-     *   computer_ids: array<string>
+     *   computer_id?: string,
+     *   computer_ids?: array<string>,
+     *   payload?: array<string, mixed>
      * }  $data  Command data
      * @return bool Whether the command was published successfully
      */
     public function handle(Room $room, array $data): bool
     {
+        Log::info('PublishCommandAction', $data);
+
         $targetType = $data['target_type'];
         $commandType = CommandType::from($data['command_type']);
+        $payload = $data['payload'] ?? [];
 
         try {
             return match ($targetType) {
-                'single' => $this->publishToSingleComputer($room->id, $data['computer_id'], $commandType),
-                'group' => $this->publishToMultipleComputers($room->id, $data['computer_ids'], $commandType),
-                'all' => $this->publishToAllComputers($room, $commandType),
+                'single' => $this->publishToSingleComputer($room->id, $data['computer_id'], $commandType, $payload),
+                'group' => $this->publishToMultipleComputers($room->id, $data['computer_ids'], $commandType, $payload),
+                'all' => $this->publishToAllComputers($room, $commandType, $payload),
             };
         } catch (Throwable $e) {
             Log::error('Command publishing failed', [
@@ -131,12 +135,14 @@ final class PublishCommandAction
      * @param  string  $roomId  Room identifier
      * @param  string  $computerId  Computer identifier
      * @param  CommandType  $commandType  Type of command
+     * @param  array<string, mixed>  $payload  Additional command parameters
      * @return bool Success status
      */
     private function publishToSingleComputer(
         string $roomId,
         string $computerId,
         CommandType $commandType,
+        array $payload = [],
     ): bool {
         // Verify computer belongs to room
         $computer = Computer::query()
@@ -158,6 +164,7 @@ final class PublishCommandAction
             'type' => $commandType,
             'computer_id' => $computerId,
             'status' => CommandStatus::PENDING,
+            'params' => $payload,
         ]);
 
         // Check if RabbitMQ is available
@@ -179,16 +186,21 @@ final class PublishCommandAction
         }
 
         // Create message payload
-        $payload = [
+        $messagePayload = [
             'command_id' => $command->id,
             'type' => $commandType->value,
             'timestamp' => time(),
         ];
 
+        // Add any additional parameters
+        if (! empty($payload)) {
+            $messagePayload['params'] = $payload;
+        }
+
         // Publish directly to the specific agent queue using MAC address
         $published = $this->rabbitMQService->publishToAgent(
             macAddress: $computer->mac_address,
-            payload: $payload
+            payload: $messagePayload
         );
 
         // Update command status based on publishing result
@@ -229,6 +241,7 @@ final class PublishCommandAction
         string $roomId,
         array $computerIds,
         CommandType $commandType,
+        array $payload = [],
     ): bool {
         // Get all valid computers from the room
         $computers = Computer::query()
@@ -254,7 +267,7 @@ final class PublishCommandAction
 
         // Process each computer individually
         foreach ($computers as $computer) {
-            $result = $this->publishToSingleComputer($roomId, $computer->id, $commandType);
+            $result = $this->publishToSingleComputer($roomId, $computer->id, $commandType, $payload);
             if (! $result) {
                 $allSuccess = false;
             }
@@ -292,7 +305,7 @@ final class PublishCommandAction
             'type' => $commandType,
             'room_id' => $room->id,
             'status' => CommandStatus::PENDING,
-            // 'params' => $params,
+            'params' => $params,
         ]);
 
         // Check if RabbitMQ is available
@@ -313,18 +326,22 @@ final class PublishCommandAction
         }
 
         // Create message payload
-        $payload = [
+        $messagePayload = [
             'command_id' => $command->id,
             'type' => $commandType->value,
-            // 'params' => $params,
             'timestamp' => time(),
             'room_id' => $room->id,
         ];
 
+        // Add any additional parameters
+        if (! empty($params)) {
+            $messagePayload['params'] = $params;
+        }
+
         // Publish to the room using the cmd.direct exchange
         $published = $this->rabbitMQService->publishToRoom(
             roomId: $room->id,
-            payload: $payload
+            payload: $messagePayload
         );
 
         // Update command status based on publishing result

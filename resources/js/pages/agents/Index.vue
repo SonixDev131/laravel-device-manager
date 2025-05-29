@@ -11,7 +11,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useToast } from '@/components/ui/toast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { AlertCircle, ArrowUpCircle, File, Loader2, X } from 'lucide-vue-next';
+import { AlertCircle, ArrowUpCircle, Download, File, Loader2, Trash2, Upload, X } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 // Define types
@@ -22,11 +22,32 @@ interface AgentStats {
     idle: number;
 }
 
-// No additional types needed
+interface AgentPackage {
+    id: string;
+    name: string;
+    file_name: string;
+    version: string;
+    size: number;
+    is_latest: boolean;
+    created_at: string;
+}
+
+interface Installer {
+    id: string;
+    name: string;
+    description: string;
+    file_name: string;
+    file_size: number;
+    auto_install: boolean;
+    install_args: string | null;
+    created_at: string;
+}
 
 interface Props {
     stats: AgentStats;
     recentComputers: any[]; // Using any to avoid type conflicts
+    packages: AgentPackage[];
+    installers: Installer[];
 }
 
 // Props
@@ -38,6 +59,7 @@ const { toast } = useToast();
 // Dialog state
 const isUpdateDialogOpen = ref(false);
 const isUploadDialogOpen = ref(false);
+const isInstallerDialogOpen = ref(false);
 
 // Update form
 const updateForm = useForm({
@@ -52,6 +74,15 @@ const uploadForm = useForm({
     file: null as File | null,
 });
 
+// Installer upload form
+const installerForm = useForm({
+    name: '',
+    description: '',
+    file: null as File | null,
+    auto_install: false,
+    install_args: '',
+});
+
 // Loading states
 const uploadProgress = ref(0);
 
@@ -61,6 +92,12 @@ const isDragging = ref(false);
 const uploadError = ref('');
 const isFileSelected = ref(false);
 const fileInputName = ref('');
+
+// Installer handling
+const installerFileInput = ref<HTMLInputElement | null>(null);
+const isInstallerFileSelected = ref(false);
+const installerFileName = ref('');
+const installerError = ref('');
 
 // File handlers
 const handleFileChange = (event: Event): void => {
@@ -187,6 +224,135 @@ const getStatusColor = (status: string): string => {
             return 'bg-gray-400';
     }
 };
+
+// Delete package function
+const deletePackage = (packageId: string): void => {
+    if (confirm('Are you sure you want to delete this package? This action cannot be undone.')) {
+        const deleteForm = useForm({});
+        deleteForm.delete(route('agents.packages.delete', packageId), {
+            onSuccess: () => {
+                toast({
+                    title: 'Success!',
+                    description: 'Package deleted successfully',
+                    variant: 'default',
+                });
+            },
+            onError: (errors) => {
+                toast({
+                    title: 'Error',
+                    description: (Object.values(errors)[0] as string) || 'Failed to delete package',
+                    variant: 'destructive',
+                });
+            },
+        });
+    }
+};
+
+// Format file size function
+const formatFileSize = (bytes: number): string => {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+};
+
+// Handle installer file selection
+const handleInstallerFileChange = (event: Event): void => {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+        const file = input.files[0];
+        installerForm.file = file;
+        installerFileName.value = file.name;
+        isInstallerFileSelected.value = true;
+        installerError.value = '';
+    }
+};
+
+// Remove installer file
+const handleInstallerFileRemove = (): void => {
+    if (installerFileInput.value) installerFileInput.value.value = '';
+    installerForm.file = null;
+    installerFileName.value = '';
+    isInstallerFileSelected.value = false;
+};
+
+// Submit installer upload
+const onInstallerSubmit = (): void => {
+    installerForm.post(route('agents.upload-installer'), {
+        forceFormData: true,
+        onSuccess: () => {
+            toast({
+                title: 'Success!',
+                description: 'Installer uploaded successfully',
+                variant: 'default',
+            });
+            closeInstallerDialog();
+        },
+        onError: (errors) => {
+            installerError.value = (Object.values(errors)[0] as string) || 'Failed to upload installer';
+        },
+    });
+};
+
+// Close installer dialog
+const closeInstallerDialog = (): void => {
+    isInstallerDialogOpen.value = false;
+    installerForm.reset();
+    handleInstallerFileRemove();
+    installerError.value = '';
+};
+
+// Broadcast installer
+const broadcastInstaller = (installerId: string): void => {
+    if (confirm('Send download command to all agents? This will start downloading the installer on all connected agents.')) {
+        const broadcastForm = useForm({});
+        broadcastForm.post(route('agents.installers.broadcast', installerId), {
+            onSuccess: () => {
+                toast({
+                    title: 'Success!',
+                    description: 'Installer download command sent to all agents',
+                    variant: 'default',
+                });
+            },
+            onError: (errors) => {
+                toast({
+                    title: 'Error',
+                    description: (Object.values(errors)[0] as string) || 'Failed to broadcast installer',
+                    variant: 'destructive',
+                });
+            },
+        });
+    }
+};
+
+// Delete installer
+const deleteInstaller = (installerId: string): void => {
+    if (confirm('Are you sure you want to delete this installer? This action cannot be undone.')) {
+        const deleteForm = useForm({});
+        deleteForm.delete(route('agents.installers.delete', installerId), {
+            onSuccess: () => {
+                toast({
+                    title: 'Success!',
+                    description: 'Installer deleted successfully',
+                    variant: 'default',
+                });
+            },
+            onError: (errors) => {
+                toast({
+                    title: 'Error',
+                    description: (Object.values(errors)[0] as string) || 'Failed to delete installer',
+                    variant: 'destructive',
+                });
+            },
+        });
+    }
+};
 </script>
 
 <template>
@@ -291,6 +457,111 @@ const getStatusColor = (status: string): string => {
                                     >
                                         <Loader2 v-if="uploadForm.processing" class="mr-2 size-4 animate-spin" />
                                         <span v-else>Upload Package</span>
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog v-model:open="isInstallerDialogOpen">
+                        <DialogTrigger as-child>
+                            <Button variant="outline">Upload Installer</Button>
+                        </DialogTrigger>
+
+                        <DialogContent class="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Upload Installer</DialogTitle>
+                                <DialogDescription>Upload an installer file to be deployed to agents</DialogDescription>
+                            </DialogHeader>
+
+                            <form @submit.prevent="onInstallerSubmit" class="grid gap-6 py-4">
+                                <!-- Name input -->
+                                <div>
+                                    <Label for="installer-name">Name</Label>
+                                    <Input id="installer-name" v-model="installerForm.name" placeholder="e.g., Google Chrome" required />
+                                    <p class="mt-1 text-sm text-destructive" v-if="installerForm.errors.name">
+                                        {{ installerForm.errors.name }}
+                                    </p>
+                                </div>
+
+                                <!-- Description input -->
+                                <div>
+                                    <Label for="installer-description">Description (optional)</Label>
+                                    <Input
+                                        id="installer-description"
+                                        v-model="installerForm.description"
+                                        placeholder="Brief description of the installer"
+                                    />
+                                    <p class="mt-1 text-sm text-destructive" v-if="installerForm.errors.description">
+                                        {{ installerForm.errors.description }}
+                                    </p>
+                                </div>
+
+                                <!-- Auto-install checkbox -->
+                                <div class="flex items-center space-x-2">
+                                    <Checkbox id="auto-install" v-model="installerForm.auto_install" />
+                                    <Label for="auto-install">Auto-install after download</Label>
+                                </div>
+
+                                <!-- Install arguments -->
+                                <div v-if="installerForm.auto_install">
+                                    <Label for="install-args">Installation Arguments (optional)</Label>
+                                    <Input id="install-args" v-model="installerForm.install_args" placeholder="/silent /norestart" />
+                                    <p class="mt-1 text-sm text-gray-500">Command line arguments for silent installation</p>
+                                </div>
+
+                                <!-- File Drop Zone -->
+                                <Card class="cursor-pointer border-dashed border-gray-300" @click="installerFileInput?.click()">
+                                    <CardContent
+                                        v-if="!isInstallerFileSelected"
+                                        class="flex flex-col items-center justify-center space-y-2 px-6 py-7"
+                                    >
+                                        <div class="rounded-full bg-primary/10 p-3">
+                                            <Upload class="size-8 text-blue-500" />
+                                        </div>
+                                        <div class="space-y-1 text-center">
+                                            <h3 class="text-base font-medium">Select installer file</h3>
+                                            <p class="text-sm text-muted-foreground">Click to browse</p>
+                                        </div>
+                                        <input ref="installerFileInput" type="file" class="hidden" @change="handleInstallerFileChange" />
+                                        <p class="mt-1 text-sm text-destructive" v-if="installerForm.errors.file">
+                                            {{ installerForm.errors.file }}
+                                        </p>
+                                    </CardContent>
+
+                                    <CardContent v-else class="px-6 py-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="rounded-full bg-blue-100 p-2">
+                                                    <File class="size-5 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-medium">{{ installerFileName }}</p>
+                                                    <p class="text-xs text-muted-foreground">Installer File</p>
+                                                </div>
+                                            </div>
+                                            <Button type="button" variant="ghost" size="icon" @click.stop="handleInstallerFileRemove">
+                                                <X class="size-4" />
+                                                <span class="sr-only">Remove file</span>
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <!-- Error message -->
+                                <div v-if="installerError" class="text-sm text-destructive">
+                                    {{ installerError }}
+                                </div>
+
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" @click="closeInstallerDialog">Cancel</Button>
+                                    <Button
+                                        type="submit"
+                                        class="bg-blue-500 text-white hover:bg-blue-600"
+                                        :disabled="!isInstallerFileSelected || installerForm.processing"
+                                    >
+                                        <Loader2 v-if="installerForm.processing" class="mr-2 size-4 animate-spin" />
+                                        <span v-else>Upload Installer</span>
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -427,6 +698,133 @@ const getStatusColor = (status: string): string => {
                     </CardContent>
                     <CardFooter>
                         <div class="text-sm text-gray-500">Showing the most recent {{ recentComputers.length }} agents.</div>
+                    </CardFooter>
+                </Card>
+            </div>
+
+            <!-- Agent Packages Management -->
+            <div class="mt-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Agent Packages</CardTitle>
+                        <CardDescription>Manage uploaded agent packages for deployment</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table v-if="packages.length > 0">
+                            <TableCaption>All uploaded agent packages</TableCaption>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Version</TableHead>
+                                    <TableHead>File Name</TableHead>
+                                    <TableHead>Size</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Uploaded</TableHead>
+                                    <TableHead class="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="pkg in packages" :key="pkg.id">
+                                    <TableCell class="font-medium">{{ pkg.version }}</TableCell>
+                                    <TableCell>{{ pkg.file_name }}</TableCell>
+                                    <TableCell>{{ formatFileSize(pkg.size) }}</TableCell>
+                                    <TableCell>
+                                        <Badge v-if="pkg.is_latest" class="bg-green-500 text-white">Latest</Badge>
+                                        <Badge v-else variant="outline">Archive</Badge>
+                                    </TableCell>
+                                    <TableCell>{{ new Date(pkg.created_at).toLocaleString() }}</TableCell>
+                                    <TableCell class="text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            @click="deletePackage(pkg.id)"
+                                            class="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        >
+                                            <Trash2 class="h-4 w-4" />
+                                            <span class="sr-only">Delete package</span>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                        <div v-else class="py-8 text-center">
+                            <File class="mx-auto h-12 w-12 text-gray-400" />
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No packages uploaded</h3>
+                            <p class="mt-1 text-sm text-gray-500">Get started by uploading your first agent package.</p>
+                        </div>
+                    </CardContent>
+                    <CardFooter v-if="packages.length > 0">
+                        <div class="text-sm text-gray-500">Total {{ packages.length }} package(s) uploaded.</div>
+                    </CardFooter>
+                </Card>
+            </div>
+
+            <!-- Installer Management -->
+            <div class="mt-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Installer Management</CardTitle>
+                        <CardDescription>Manage and deploy installer files to all agents</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table v-if="installers.length > 0">
+                            <TableCaption>All uploaded installer files</TableCaption>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>File Name</TableHead>
+                                    <TableHead>Size</TableHead>
+                                    <TableHead>Auto Install</TableHead>
+                                    <TableHead>Uploaded</TableHead>
+                                    <TableHead class="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="installer in installers" :key="installer.id">
+                                    <TableCell class="font-medium">{{ installer.name }}</TableCell>
+                                    <TableCell>{{ installer.description || '—' }}</TableCell>
+                                    <TableCell>{{ installer.file_name }}</TableCell>
+                                    <TableCell>{{ formatFileSize(installer.file_size) }}</TableCell>
+                                    <TableCell>
+                                        <Badge v-if="installer.auto_install" class="bg-green-500 text-white">Yes</Badge>
+                                        <Badge v-else variant="outline">No</Badge>
+                                    </TableCell>
+                                    <TableCell>{{ new Date(installer.created_at).toLocaleString() }}</TableCell>
+                                    <TableCell class="text-right">
+                                        <div class="flex justify-end space-x-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                @click="broadcastInstaller(installer.id)"
+                                                class="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                                title="Send to all agents"
+                                            >
+                                                <Download class="h-4 w-4" />
+                                                <span class="sr-only">Broadcast installer</span>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                @click="deleteInstaller(installer.id)"
+                                                class="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                title="Delete installer"
+                                            >
+                                                <Trash2 class="h-4 w-4" />
+                                                <span class="sr-only">Delete installer</span>
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                        <div v-else class="py-8 text-center">
+                            <Upload class="mx-auto h-12 w-12 text-gray-400" />
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No installers uploaded</h3>
+                            <p class="mt-1 text-sm text-gray-500">Upload installer files to deploy them to your agents.</p>
+                        </div>
+                    </CardContent>
+                    <CardFooter v-if="installers.length > 0">
+                        <div class="text-sm text-gray-500">Total {{ installers.length }} installer(s) available.</div>
                     </CardFooter>
                 </Card>
             </div>

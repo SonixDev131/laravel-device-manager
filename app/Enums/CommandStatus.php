@@ -7,6 +7,7 @@ namespace App\Enums;
 enum CommandStatus: string
 {
     case PENDING = 'pending';
+    case QUEUED = 'queued';
     case IN_PROGRESS = 'in_progress';
     case SENT = 'sent';
     case FAILED = 'failed';

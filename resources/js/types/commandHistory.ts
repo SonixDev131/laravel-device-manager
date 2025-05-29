@@ -7,4 +7,5 @@ export interface CommandHistoryItem {
     target: string;
     is_group_command: boolean;
     error?: string;
+    output?: string;
 }

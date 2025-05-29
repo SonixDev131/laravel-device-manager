@@ -28,6 +28,7 @@ class AgentCommandResultRequest extends FormRequest
             'command_id' => ['required', 'uuid'],
             'completed_at' => ['required', 'date'],
             'error' => ['nullable', 'string'],
+            'output' => ['nullable', 'string'],
         ];
     }
 }

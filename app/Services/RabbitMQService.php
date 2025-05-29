@@ -238,6 +238,47 @@ final class RabbitMQService
     }
 
     /**
+     * Broadcast installer download command to all agents
+     *
+     * @param  string  $installerId  Installer ID
+     * @param  string  $installerName  Installer name
+     * @param  string  $downloadUrl  URL to download the installer
+     * @param  bool  $autoInstall  Whether to auto-install after download
+     * @param  string|null  $installArgs  Installation arguments
+     * @param  string  $threadId  Thread identifier for connection pooling
+     * @return bool Whether the message was published successfully
+     */
+    public function broadcastInstallerDownload(
+        string $installerId,
+        string $installerName,
+        string $downloadUrl,
+        bool $autoInstall = false,
+        ?string $installArgs = null,
+        string $threadId = 'default'
+    ): bool {
+        $payload = [
+            'type' => 'download_installer',
+            'installer_id' => $installerId,
+            'installer_name' => $installerName,
+            'download_url' => $downloadUrl,
+            'auto_install' => $autoInstall,
+            'install_args' => $installArgs,
+            'timestamp' => time(),
+        ];
+
+        $result = $this->publishBroadcast($payload, $threadId);
+        if ($result) {
+            Log::info('Installer download command broadcasted to all agents', [
+                'installer_id' => $installerId,
+                'installer_name' => $installerName,
+                'auto_install' => $autoInstall,
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
      * Consume messages from a RabbitMQ queue using push model (basic_consume)
      *
      * @param  string  $queueName  Queue name to consume from
@@ -465,11 +506,18 @@ final class RabbitMQService
     private function getConnection(string $type = 'publisher'): AMQPStreamConnection
     {
         if (! isset($this->connections[$type]) || ! $this->connections[$type]->isConnected()) {
-            $host = (string) config('rabbitmq.host', 'localhost');
-            $port = (int) config('rabbitmq.port', 5672);
-            $user = (string) config('rabbitmq.user', 'guest');
-            $password = (string) config('rabbitmq.password', 'guest');
-            $vhost = (string) config('rabbitmq.vhost', '/');
+            $host = config('rabbitmq.host') ?: 'localhost';
+            $port = config('rabbitmq.port') ?: 5672;
+            $user = config('rabbitmq.user') ?: 'guest';
+            $password = config('rabbitmq.password') ?: 'guest';
+            $vhost = config('rabbitmq.vhost') ?: '/';
+
+            // Ensure proper types
+            $host = (string) $host;
+            $port = (int) $port;
+            $user = (string) $user;
+            $password = (string) $password;
+            $vhost = (string) $vhost;
 
             Log::debug('Creating new RabbitMQ connection', [
                 'type' => $type,

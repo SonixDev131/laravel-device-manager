@@ -17,7 +17,10 @@ final class RoomCommandHistoryController extends Controller
     public function index(GetRoomCommandsRequest $request, Room $room): JsonResponse
     {
         $commands = Command::query()
-            ->whereHas('computer', fn ($query) => $query->where('room_id', $room->id))
+            ->where(function ($query) use ($room) {
+                $query->whereHas('computer', fn ($q) => $q->where('room_id', $room->id))
+                    ->orWhere('room_id', $room->id);
+            })
             ->with('computer')
             ->orderByDesc('created_at')
             ->limit(50)
@@ -31,6 +34,7 @@ final class RoomCommandHistoryController extends Controller
                 'target' => $command->computer ? $command->computer->hostname : 'Room',
                 'is_group_command' => $command->is_group_command,
                 'error' => $command->error,
+                'output' => $command->output,
             ]);
 
         return response()->json(['data' => $commands]);

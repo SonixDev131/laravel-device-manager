@@ -28,6 +28,8 @@ const isOpen = ref<boolean>(false);
 const error = ref<string | null>(null);
 const selectedErrorMessage = ref<string | null>(null);
 const isErrorDialogOpen = ref<boolean>(false);
+const selectedOutputContent = ref<string | null>(null);
+const isOutputDialogOpen = ref<boolean>(false);
 
 // Format the date in a readable format
 const formatDate = (dateString: string) => {
@@ -94,6 +96,12 @@ const showErrorDetails = (errorMessage: string) => {
     selectedErrorMessage.value = errorMessage;
     isErrorDialogOpen.value = true;
 };
+
+// Show output details dialog
+const showOutputDetails = (outputContent: string) => {
+    selectedOutputContent.value = outputContent;
+    isOutputDialogOpen.value = true;
+};
 </script>
 
 <template>
@@ -149,12 +157,13 @@ const showErrorDetails = (errorMessage: string) => {
                     <Table class="w-full text-sm">
                         <TableHeader>
                             <TableRow class="border-b hover:bg-transparent">
-                                <TableHead class="w-1/7 py-2">Type</TableHead>
-                                <TableHead class="w-1/7 py-2">Target</TableHead>
-                                <TableHead class="w-1/7 py-2">Status</TableHead>
-                                <TableHead class="w-1/7 py-2">Sent at</TableHead>
-                                <TableHead class="w-1/7 py-2">Completed</TableHead>
-                                <TableHead class="w-2/7 py-2">Error</TableHead>
+                                <TableHead class="w-1/8 py-2">Type</TableHead>
+                                <TableHead class="w-1/8 py-2">Target</TableHead>
+                                <TableHead class="w-1/8 py-2">Status</TableHead>
+                                <TableHead class="w-1/8 py-2">Sent at</TableHead>
+                                <TableHead class="w-1/8 py-2">Completed</TableHead>
+                                <TableHead class="w-2/8 py-2">Output</TableHead>
+                                <TableHead class="w-1/8 py-2">Error</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -174,6 +183,17 @@ const showErrorDetails = (errorMessage: string) => {
                                 <TableCell class="py-2">{{ formatDate(command.created_at) }}</TableCell>
                                 <TableCell class="py-2">
                                     <span v-if="command.completed_at">{{ formatDate(command.completed_at) }}</span>
+                                    <span v-else class="text-muted-foreground">-</span>
+                                </TableCell>
+                                <TableCell class="max-w-[200px] py-2">
+                                    <div v-if="command.output" class="flex items-center">
+                                        <span class="mr-2 truncate text-sm" :title="command.output">
+                                            {{ command.output }}
+                                        </span>
+                                        <Button variant="ghost" size="icon" class="h-5 w-5 p-0" @click="showOutputDetails(command.output)">
+                                            <AlertCircle class="h-4 w-4 text-blue-500" />
+                                        </Button>
+                                    </div>
                                     <span v-else class="text-muted-foreground">-</span>
                                 </TableCell>
                                 <TableCell class="max-w-[200px] py-2">
@@ -215,6 +235,29 @@ const showErrorDetails = (errorMessage: string) => {
 
             <div class="mt-4 max-h-[40vh] overflow-auto rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
                 <pre class="whitespace-pre-wrap text-sm">{{ selectedErrorMessage }}</pre>
+            </div>
+
+            <DialogFooter class="sm:justify-end">
+                <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Output Details Dialog -->
+    <Dialog v-model:open="isOutputDialogOpen">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2 text-blue-600">
+                    <AlertCircle class="h-5 w-5" />
+                    Command Output Details
+                </DialogTitle>
+                <DialogDescription> The full output content for the command. </DialogDescription>
+            </DialogHeader>
+
+            <div class="mt-4 max-h-[40vh] overflow-auto rounded-md border border-blue-200 bg-blue-50 p-4 text-blue-800">
+                <pre class="whitespace-pre-wrap text-sm">{{ selectedOutputContent }}</pre>
             </div>
 
             <DialogFooter class="sm:justify-end">
