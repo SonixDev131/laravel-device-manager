@@ -6,8 +6,8 @@ namespace App\Actions;
 
 use App\Enums\CommandType;
 use App\Models\Computer;
-use App\Models\User;
 use App\Services\RabbitMQService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class UpdateAllAgentsAction
@@ -22,11 +22,9 @@ class UpdateAllAgentsAction
     /**
      * Handle the update all agents command.
      *
-     * @param  User  $user  The user initiating the update
-     * @param  array<string, mixed>  $data  Update parameters (version, force, restart_after)
      * @return array<string, mixed> Result information
      */
-    public function handle(User $user, array $data): array
+    public function handle(Request $request): array
     {
         // Find all computers that are online or idle
         $computers = Computer::query()
@@ -56,24 +54,13 @@ class UpdateAllAgentsAction
 
         // Prepare update command payload
         $payload = [
-            'type' => CommandType::UPDATE->value,
-            'initiated_by' => $user->id,
-            'timestamp' => now()->toIso8601String(),
-            'is_broadcast' => true,
-            'params' => [
-                'version' => $data['version'] ?? null,
-                'force' => $data['force'] ?? false,
-                'restart_after' => $data['restart_after'] ?? false,
-            ],
+            'type' => CommandType::UPDATE,
+            'params' => [],
         ];
 
         // Log the update action
         Log::info('Initiating system-wide agent update', [
-            'user_id' => $user->id,
-            'computer_count' => $computers->count(),
-            'version' => $data['version'] ?? 'latest',
-            'force' => $data['force'] ?? false,
-            'restart_after' => $data['restart_after'] ?? false,
+            'payload' => $payload,
         ]);
 
         // Send broadcast message to all agents

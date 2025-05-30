@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\UpdateAllAgentsAction;
-use App\Http\Requests\UpdateAgentsRequest;
 use App\Http\Requests\UploadAgentRequest;
 use App\Http\Requests\UploadInstallerRequest;
 use App\Models\AgentPackage;
@@ -14,6 +13,7 @@ use App\Models\Installer;
 use App\Services\RabbitMQService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -95,9 +95,9 @@ class AgentsController extends Controller
     /**
      * Initiate update for all agents.
      */
-    public function updateAll(UpdateAgentsRequest $request, UpdateAllAgentsAction $action): JsonResponse
+    public function updateAll(Request $request, UpdateAllAgentsAction $action): JsonResponse
     {
-        $result = $action->handle($request->user(), $request->validated());
+        $result = $action->handle($request);
 
         if ($result['success']) {
             return response()->json([
