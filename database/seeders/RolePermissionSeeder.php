@@ -24,17 +24,17 @@ final class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create all permissions using enums
+        // Create all permissions using enums (use firstOrCreate to avoid duplicates)
         foreach (PermissionsEnum::cases() as $permission) {
-            Permission::create(['name' => $permission->value]);
+            Permission::firstOrCreate(['name' => $permission->value]);
         }
 
         // update cache to know about the newly created permissions (required if using WithoutModelEvents in seeders)
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create roles using enums as per Spatie documentation
-        $superAdminRole = Role::create(['name' => RolesEnum::SUPERADMIN->value]);
-        $teacherRole = Role::create(['name' => RolesEnum::TEACHER->value]);
+        // Create roles using enums as per Spatie documentation (use firstOrCreate to avoid duplicates)
+        $superAdminRole = Role::firstOrCreate(['name' => RolesEnum::SUPERADMIN->value]);
+        $teacherRole = Role::firstOrCreate(['name' => RolesEnum::TEACHER->value]);
 
         // Assign ALL permissions to Super Admin (global access)
         $superAdminRole->givePermissionTo(PermissionsEnum::cases());
@@ -65,58 +65,74 @@ final class RolePermissionSeeder extends Seeder
         $roomModel = Room::class;
         $userModel = User::class;
 
-        // Create sample rooms
-        $room1 = $roomModel::create([
-            'name' => 'Computer Lab 1',
-            'grid_rows' => 5,
-            'grid_cols' => 6,
-        ]);
+        // Create sample rooms (use firstOrCreate to avoid duplicates)
+        $room1 = $roomModel::firstOrCreate(
+            ['name' => 'Computer Lab 1'],
+            [
+                'grid_rows' => 5,
+                'grid_cols' => 6,
+            ]
+        );
 
-        $room2 = $roomModel::create([
-            'name' => 'Computer Lab 2',
-            'grid_rows' => 4,
-            'grid_cols' => 8,
-        ]);
+        $room2 = $roomModel::firstOrCreate(
+            ['name' => 'Computer Lab 2'],
+            [
+                'grid_rows' => 4,
+                'grid_cols' => 8,
+            ]
+        );
 
-        // Create a demo teacher user
-        $teacherUser = $userModel::create([
-            'name' => 'John Teacher',
-            'email' => 'teacher@example.com',
-            'password' => bcrypt('password'),
-            'email_verified_at' => now(),
-        ]);
+        // Create a demo teacher user (use firstOrCreate to avoid duplicates)
+        $teacherUser = $userModel::firstOrCreate(
+            ['email' => 'teacher@example.com'],
+            [
+                'name' => 'John Teacher',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // Assign teacher role
-        $teacherUser->assignRole(RolesEnum::TEACHER->value);
+        // Assign teacher role (sync to ensure clean role assignment)
+        $teacherUser->syncRoles([RolesEnum::TEACHER->value]);
 
-        // Create a super admin user
-        $adminUser = $userModel::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            'email_verified_at' => now(),
-        ]);
+        // Create a super admin user (use firstOrCreate to avoid duplicates)
+        $adminUser = $userModel::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // Assign super admin role
-        $adminUser->assignRole(RolesEnum::SUPERADMIN->value);
+        // Assign super admin role (sync to ensure clean role assignment)
+        $adminUser->syncRoles([RolesEnum::SUPERADMIN->value]);
 
-        // Create room assignments for the teacher using our pivot table
-        UserRoomAssignment::create([
-            'user_id' => $teacherUser->id,
-            'room_id' => $room1->id,
-            'is_active' => true,
-            'assigned_at' => now(),
-            'expires_at' => null, // No expiration
-        ]);
+        // Create room assignments for the teacher using our pivot table (use firstOrCreate to avoid duplicates)
+        UserRoomAssignment::firstOrCreate(
+            [
+                'user_id' => $teacherUser->id,
+                'room_id' => $room1->id,
+            ],
+            [
+                'is_active' => true,
+                'assigned_at' => now(),
+                'expires_at' => null, // No expiration
+            ]
+        );
 
         // Assign teacher to second room with expiration (for testing)
-        UserRoomAssignment::create([
-            'user_id' => $teacherUser->id,
-            'room_id' => $room2->id,
-            'is_active' => true,
-            'assigned_at' => now(),
-            'expires_at' => now()->addDays(30), // Expires in 30 days
-        ]);
+        UserRoomAssignment::firstOrCreate(
+            [
+                'user_id' => $teacherUser->id,
+                'room_id' => $room2->id,
+            ],
+            [
+                'is_active' => true,
+                'assigned_at' => now(),
+                'expires_at' => now()->addDays(30), // Expires in 30 days
+            ]
+        );
 
         echo "✅ Teacher assigned to rooms with room-specific access control\n";
         echo "   - Teacher has access to Computer Lab 1 (permanent)\n";
