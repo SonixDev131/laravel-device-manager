@@ -18,9 +18,7 @@ import { ref } from 'vue';
 
 // 2. Props/Emits definition
 interface Props {
-    rooms: {
-        data: Room[];
-    };
+    rooms: Room[];
 }
 
 const props = defineProps<Props>();
@@ -194,12 +192,12 @@ const clearSearch = (): void => {
                 </Alert>
 
                 <!-- Empty state when no rooms exist -->
-                <RoomEmptyState v-else-if="props.rooms.data.length === 0" @create="openCreateDialog" />
+                <RoomEmptyState v-else-if="props.rooms.length === 0" @create="openCreateDialog" />
 
                 <!-- Room grid -->
                 <RoomGrid
                     v-else
-                    :rooms="props.rooms.data"
+                    :rooms="props.rooms"
                     :search-query="searchQuery"
                     :is-loading="isLoading"
                     @view="viewRoomDetails"

@@ -3,43 +3,68 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AgentsController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\RoomBlockedWebsitesController;
 use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomCommandHistoryController;
 use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public routes
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('home')->middleware('guest');
 
 // Authenticated routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    // Route::get('/dashboard', function () {
+    //     return Inertia::render('Dashboard');
+    // })->name('dashboard');
 
-    // Rooms
-    Route::resource('rooms', RoomController::class)
-        ->only(['index', 'store', 'update', 'destroy', 'show']);
+    // Room Management
+    Route::middleware(['can:manage-rooms'])->group(function () {
+        Route::get('/admin/rooms', [RoomController::class, 'index'])->name('rooms.index');
+        Route::post('/admin/rooms', [RoomController::class, 'store'])->name('rooms.store');
+        Route::patch('/admin/rooms/{room}', [RoomController::class, 'update'])->name('rooms.update');
+        Route::delete('/admin/rooms/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+    });
 
-    Route::post('/rooms/{room}/computers', [RoomComputerController::class, 'store'])
-        ->name('rooms.computers.store');
+    // Room Assignment Management (Admin only)
+    Route::middleware(['can:manage-user-rooms'])->group(function () {
+        Route::get('/admin/room-assignments', [RoomController::class, 'adminRoomAssignments'])->name('admin.room-assignments');
+        Route::get('/admin/room-import', [RoomController::class, 'adminImport'])->name('admin.room-import');
+        Route::post('/admin/room-import', [RoomController::class, 'import'])->name('rooms.import');
+        Route::post('/admin/assign-teacher', [RoomController::class, 'assignTeacher'])->name('admin.assign-teacher');
+        Route::delete('/admin/room-assignments/{assignment}', [RoomController::class, 'removeAssignment'])->name('admin.remove-assignment');
+        Route::patch('/admin/room-assignments/{assignment}', [RoomController::class, 'updateAssignment'])->name('admin.update-assignment');
+    });
 
-    Route::post('/rooms/{room}/commands', [RoomCommandController::class, 'publish'])->name('rooms.commands.publish');
+    // Teacher Management (Admin only)
+    Route::middleware(['can:manage-users'])->group(function () {
+        Route::get('/admin/teachers', [TeacherController::class, 'index'])->name('admin.teachers.index');
+        Route::post('/admin/teachers', [TeacherController::class, 'store'])->name('admin.teachers.store');
+        Route::delete('/admin/teachers/{teacher}', [TeacherController::class, 'destroy'])->name('admin.teachers.destroy');
+    });
 
-    Route::get('/rooms/{room}/commands', [RoomCommandHistoryController::class, 'index'])->name('rooms.commands.index');
+    // Teacher Room Management
+    Route::get('/teacher/my-rooms', [RoomController::class, 'teacherRooms'])->name('teacher.rooms');
 
-    Route::get('/rooms/{room}/blocked-websites', [RoomBlockedWebsitesController::class, 'index'])->name('rooms.blocked-websites.index');
+    // Room-specific operations (requires room access for teachers, always allowed for admins)
+    Route::middleware(['room.access'])->group(function () {
+        Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
+        Route::post('/rooms/{room}/commands', [RoomCommandController::class, 'publish'])->name('rooms.commands.publish');
+        Route::get('/rooms/{room}/commands', [RoomCommandHistoryController::class, 'index'])->name('rooms.commands.index');
+        Route::get('/rooms/{room}/blocked-websites', [RoomBlockedWebsitesController::class, 'index'])->name('rooms.blocked-websites.index');
+        Route::post('/rooms/{room}/update-agents', [RoomController::class, 'updateAgents'])->name('rooms.update-agents');
+        Route::post('/rooms/{room}/computers', [RoomComputerController::class, 'store'])->name('rooms.computers.store');
 
-    Route::post('/rooms/{room}/update-agents', [RoomController::class, 'updateAgents'])
-        ->name('rooms.update-agents');
-
-    Route::post('rooms/import', [RoomController::class, 'import'])->name('rooms.import');
+        // Additional room operations
+        Route::post('/rooms/{room}/send-command', [RoomController::class, 'sendCommand'])->name('rooms.send-command');
+        Route::post('/rooms/{room}/screenshot', [RoomController::class, 'takeScreenshot'])->name('rooms.screenshot');
+        Route::post('/rooms/{room}/block-websites', [RoomController::class, 'blockWebsites'])->name('rooms.block-websites');
+    });
 
     // System-wide agent management (admin only)
     // Route::middleware(['can:update-agents'])->group(function () {

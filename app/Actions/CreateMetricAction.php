@@ -22,6 +22,7 @@ final class CreateMetricAction
      *   status: string,
      *   last_heartbeat_at: string,
      *   timestamp: int,
+     *   mac_address?: string,
      *   metrics: array{
      *     cpu_usage: float,
      *     memory_total: int,
@@ -50,7 +51,48 @@ final class CreateMetricAction
         }
 
         try {
-            // Create the new metric
+            // Check if the computer exists first to avoid foreign key constraint violations
+            $computer = Computer::find($data['computer_id']);
+
+            if (! $computer) {
+                // Check if room exists
+                $room = Room::find($data['room_id']);
+                if (! $room) {
+                    Log::warning('Metrics received for non-existent room - skipping computer registration', [
+                        'computer_id' => $data['computer_id'],
+                        'room_id' => $data['room_id'],
+                        'hostname' => $data['metrics']['hostname'] ?? 'unknown',
+                        'message' => 'Agent may be misconfigured with wrong room_id. Available rooms should be checked.',
+                    ]);
+
+                    return null;
+                }
+
+                // Auto-register the computer if it doesn't exist
+                $computer = Computer::create([
+                    'id' => $data['computer_id'],
+                    'room_id' => $data['room_id'],
+                    'hostname' => $data['metrics']['hostname'],
+                    'mac_address' => $data['mac_address'] ?? 'UNKNOWN',
+                    'pos_row' => 1, // Default position
+                    'pos_col' => 1, // Default position
+                    'status' => ComputerStatus::from($data['status']),
+                    'last_heartbeat_at' => now(),
+                ]);
+
+                Log::info('Auto-registered new computer from metrics', [
+                    'computer_id' => $data['computer_id'],
+                    'hostname' => $data['metrics']['hostname'],
+                    'room_id' => $data['room_id'],
+                ]);
+            } else {
+                // Update existing computer status
+                $computer->status = ComputerStatus::from($data['status']);
+                $computer->last_heartbeat_at = now();
+                $computer->save();
+            }
+
+            // Now create the metric with confidence that the computer exists
             $metric = Metric::query()->create([
                 'computer_id' => $data['computer_id'],
                 'hostname' => $data['metrics']['hostname'],
@@ -64,19 +106,6 @@ final class CreateMetricAction
                 'uptime' => $data['metrics']['uptime'],
                 'firewall_status' => json_encode($data['metrics']['firewall_status'], JSON_FORCE_OBJECT),
             ]);
-
-            // Update the associated computer's status and metrics
-            $computer = Computer::find($data['computer_id']);
-
-            if ($computer) {
-                $computer->status = ComputerStatus::from($data['status']);
-                $computer->last_heartbeat_at = now();
-                $computer->save();
-            } else {
-                Log::warning('Computer not found when processing metrics', [
-                    'computer_id' => $data['computer_id'],
-                ]);
-            }
 
             Log::info('firewall_status received', ['firewall_status' => $data['metrics']['firewall_status']]);
 

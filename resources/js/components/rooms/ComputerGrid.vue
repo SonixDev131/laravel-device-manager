@@ -10,6 +10,9 @@ const props = defineProps<{
     room: Room;
     selectedComputers: string[];
     commandMode: 'selected' | 'all';
+    userAccess?: {
+        can_manage_computers?: boolean;
+    };
 }>();
 
 const emit = defineEmits<{
@@ -113,7 +116,9 @@ const roomInfo = computed(() => {
 
                             <!-- Improved empty cell with "+" button and additional height for consistency -->
                             <div v-else :key="`empty-${cell.row}-${cell.col}`" class="flex flex-col items-center">
+                                <!-- Show add button only if user has permission -->
                                 <div
+                                    v-if="userAccess?.can_manage_computers"
                                     class="group relative flex h-16 w-16 cursor-pointer select-none items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/20 bg-background/50 transition-all hover:border-muted-foreground/50 hover:bg-muted/20"
                                     @click="handleAddComputer(cell.row, cell.col)"
                                 >
@@ -123,6 +128,13 @@ const roomInfo = computed(() => {
                                         <PlusIcon class="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <div class="text-xs text-muted-foreground/50 group-hover:opacity-0">{{ cell.row }},{{ cell.col }}</div>
+                                </div>
+                                <!-- Show empty placeholder if user doesn't have permission -->
+                                <div
+                                    v-else
+                                    class="flex h-16 w-16 items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/10 bg-background/20"
+                                >
+                                    <div class="text-xs text-muted-foreground/30">{{ cell.row }},{{ cell.col }}</div>
                                 </div>
                                 <!-- Empty space matching the height of the status indicator -->
                                 <div class="h-6"></div>

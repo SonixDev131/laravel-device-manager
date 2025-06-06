@@ -25,6 +25,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
     room: Room;
+    userAccess?: {
+        can_send_commands?: boolean;
+        can_take_screenshots?: boolean;
+        can_block_websites?: boolean;
+        can_manage_computers?: boolean;
+    };
 }>();
 
 // State management (moved from store)
@@ -141,6 +147,7 @@ const executeCommand = (commandType: CommandType, payload?: any) => {
                     :room="room"
                     :selected-computers="selectedComputers"
                     :commandMode="commandMode"
+                    :user-access="userAccess"
                     @toggle-selection="toggleComputerSelection"
                     class="h-full"
                 />

@@ -3,43 +3,74 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
-import { Folder, LayoutGrid, Settings } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, Settings, Upload, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-// Get the current user to determine admin status
+// Get the current user to determine role-based access
 const page = usePage();
-const user = computed(() => page.props.auth.user);
-const isAdmin = computed(() => user.value?.is_admin === true);
+const user = computed(() => (page.props.auth as any)?.user);
+const isAdmin = computed(() => user.value?.roles?.some((role: any) => role.name === 'super-admin') || false);
+const isTeacher = computed(() => user.value?.roles?.some((role: any) => role.name === 'teacher') || false);
 
 const mainNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
-        {
-            title: 'Dashboard',
-            href: '/dashboard',
-            icon: LayoutGrid,
-        },
-        {
-            title: 'Rooms',
-            href: '/rooms',
-            icon: Folder,
-        },
-        {
-            title: 'Agents Management',
-            href: '/agents',
-            icon: Settings,
-        },
+        // {
+        //     title: 'Dashboard',
+        //     href: '/dashboard',
+        //     icon: LayoutGrid,
+        // },
     ];
 
-    // Only show Agents Management to admin users
-    // if (isAdmin.value) {
+    // Add teacher-specific navigation
+    if (isTeacher.value) {
+        items.push({
+            title: 'My Rooms',
+            href: '/teacher/my-rooms',
+            icon: BookOpen,
+        });
+    }
+
+    // Add admin/general room access
+    // if (isAdmin.value || isTeacher.value) {
     //     items.push({
-    //         title: 'Agents Management',
-    //         href: '/agents',
-    //         icon: Settings,
+    //         title: 'Rooms',
+    //         href: '/rooms',
+    //         icon: Folder,
     //     });
     // }
+
+    // Admin-only items
+    if (isAdmin.value) {
+        items.push(
+            {
+                title: 'Teachers',
+                href: '/admin/teachers',
+                icon: Users,
+            },
+            {
+                title: 'Rooms',
+                href: '/admin/rooms',
+                icon: Folder,
+            },
+            {
+                title: 'Room Import',
+                href: '/admin/room-import',
+                icon: Upload,
+            },
+            {
+                title: 'Room Assignments',
+                href: '/admin/room-assignments',
+                icon: BookOpen,
+            },
+            {
+                title: 'Agents Management',
+                href: '/agents',
+                icon: Settings,
+            },
+        );
+    }
 
     return items;
 });
@@ -64,7 +95,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
+                        <Link>
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

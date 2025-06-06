@@ -23262,7 +23262,6 @@ namespace ZanySoft\Zip\Facades {
          * Check a zip archive
          *
          * @param string $zip_file ZIP file name
-         * @return bool 
          * @static 
          */
         public static function check($zip_file)
@@ -23338,7 +23337,6 @@ namespace ZanySoft\Zip\Facades {
         /**
          * Set current base path (just to add relative files to zip archive)
          *
-         * @param string $path
          * @return \Zip 
          * @static 
          */
@@ -23388,7 +23386,6 @@ namespace ZanySoft\Zip\Facades {
         /**
          * Set the current ZipArchive object
          *
-         * @param \ZipArchive $zip
          * @return \Zip 
          * @static 
          */
@@ -23668,6 +23665,36 @@ namespace Illuminate\Routing {
         public static function inertia($uri, $component, $props = [])
         {
             return \Illuminate\Routing\Router::inertia($uri, $component, $props);
+        }
+
+            }
+    /**
+     * 
+     *
+     */
+    class Route {
+        /**
+         * 
+         *
+         * @see \Spatie\Permission\PermissionServiceProvider::registerMacroHelpers()
+         * @param mixed $roles
+         * @static 
+         */
+        public static function role($roles = [])
+        {
+            return \Illuminate\Routing\Route::role($roles);
+        }
+
+        /**
+         * 
+         *
+         * @see \Spatie\Permission\PermissionServiceProvider::registerMacroHelpers()
+         * @param mixed $permissions
+         * @static 
+         */
+        public static function permission($permissions = [])
+        {
+            return \Illuminate\Routing\Route::permission($permissions);
         }
 
             }
