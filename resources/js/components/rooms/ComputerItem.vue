@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Computer } from '@/types';
+import { Edit, MoreVertical, Trash } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 defineEmits<{
     click: [];
+    editComputer: [computer: Computer];
+    deleteComputer: [computer: Computer];
 }>();
 
 interface Props {
@@ -13,10 +18,11 @@ interface Props {
     index: number;
     isSelected: boolean;
     isSelectable?: boolean;
+    canManageComputers?: boolean;
 }
 
 const props = defineProps<Props>();
-const { isSelectable = true } = props;
+const { isSelectable = true, canManageComputers = false } = props;
 
 // Status indicators computed properties
 const statusDotClass = computed(() => {
@@ -65,12 +71,6 @@ const formattedUptime = computed(() => {
     }
 });
 
-// Format percentage values with 1 decimal place
-const formatPercent = (value?: number) => {
-    if (value === undefined) return 'N/A';
-    return `${value.toFixed(1)}%`;
-};
-
 // Status ring class bindings
 const statusRingClass = computed(() => {
     const baseClasses = ['status-ring', 'absolute', 'inset-0', 'rounded', 'ring-4', 'ring-inset', 'transition-colors'];
@@ -87,6 +87,7 @@ const statusRingClass = computed(() => {
 // Class binding for the main computer item
 const computerClass = computed(() => {
     const baseClasses = [
+        'group', // Add group class for hover effects
         'relative',
         'flex',
         'h-16', // Reduced height since status is now outside
@@ -153,6 +154,30 @@ const firewallStatus = computed(() => {
                         <!-- Status ring overlay (subtle background effect) -->
                         <div :class="statusRingClass"></div>
 
+                        <!-- Admin action buttons (only visible on hover and with permission) -->
+                        <div v-if="canManageComputers" class="absolute -right-1 -top-1 z-10 opacity-0 transition-opacity group-hover:opacity-100">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" class="h-6 w-6 bg-white p-0 shadow-sm hover:shadow-md">
+                                        <MoreVertical class="h-3 w-3" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem @click="$emit('editComputer', computer)" class="cursor-pointer">
+                                        <Edit class="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        @click="$emit('deleteComputer', computer)"
+                                        class="cursor-pointer text-red-600 focus:text-red-600"
+                                    >
+                                        <Trash class="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+
                         <!-- Computer content -->
                         <!-- <div class="z-10 flex items-center justify-center">
                             <span class="max-w-full truncate text-sm font-medium">{{ computer.hostname }}</span>
@@ -195,7 +220,9 @@ const firewallStatus = computed(() => {
                                         <Progress
                                             class="h-1.5"
                                             :model-value="
-                                                ((computer.latest_metric?.memory_used / computer.latest_metric?.memory_total) * 100).toFixed(1)
+                                                Number(
+                                                    ((computer.latest_metric?.memory_used / computer.latest_metric?.memory_total) * 100).toFixed(1),
+                                                )
                                             "
                                         />
                                     </div>
@@ -212,7 +239,9 @@ const firewallStatus = computed(() => {
                                         </div>
                                         <Progress
                                             class="h-1.5"
-                                            :model-value="((computer.latest_metric?.disk_used / computer.latest_metric?.disk_total) * 100).toFixed(1)"
+                                            :model-value="
+                                                Number(((computer.latest_metric?.disk_used / computer.latest_metric?.disk_total) * 100).toFixed(1))
+                                            "
                                         />
                                     </div>
                                 </div>

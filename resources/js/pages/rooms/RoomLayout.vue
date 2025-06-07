@@ -3,6 +3,8 @@ import BlockedWebsites from '@/components/rooms/BlockedWebsites.vue';
 import CommandHistory from '@/components/rooms/CommandHistory.vue';
 import ControlBar from '@/components/rooms/ComputerControls.vue';
 import ComputerGrid from '@/components/rooms/ComputerGrid.vue';
+import DeleteComputerDialog from '@/components/rooms/DeleteComputerDialog.vue';
+import EditComputerDialog from '@/components/rooms/EditComputerDialog.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Computer, Room, type BreadcrumbItem } from '@/types';
 import { CommandType } from '@/types/command';
@@ -39,6 +41,13 @@ const selectedComputers = ref<string[]>([]);
 const commandMode = ref<'selected' | 'all'>('selected');
 // Ref for ControlBar to access its methods
 const controlBarRef = ref<any>(null);
+
+// Edit/Delete Computer Dialog State
+const showEditDialog = ref(false);
+const showDeleteDialog = ref(false);
+const selectedComputerForEdit = ref<Computer | null>(null);
+const selectedComputerForDelete = ref<Computer | null>(null);
+
 // Computed properties
 const totalComputers = computed(() => props.room.computers?.length || 0);
 
@@ -59,6 +68,17 @@ const toggleComputerSelection = (computerId: string) => {
     } else {
         selectedComputers.value.splice(index, 1);
     }
+};
+
+// Edit/Delete Computer handlers
+const handleEditComputer = (computer: Computer) => {
+    selectedComputerForEdit.value = computer;
+    showEditDialog.value = true;
+};
+
+const handleDeleteComputer = (computer: Computer) => {
+    selectedComputerForDelete.value = computer;
+    showDeleteDialog.value = true;
 };
 
 // Method to show the block website dialog
@@ -149,6 +169,8 @@ const executeCommand = (commandType: CommandType, payload?: any) => {
                     :commandMode="commandMode"
                     :user-access="userAccess"
                     @toggle-selection="toggleComputerSelection"
+                    @editComputer="handleEditComputer"
+                    @deleteComputer="handleDeleteComputer"
                     class="h-full"
                 />
             </div>
@@ -159,5 +181,11 @@ const executeCommand = (commandType: CommandType, payload?: any) => {
                 <CommandHistory :room-id="room.id" />
             </div>
         </div>
+
+        <!-- Edit Computer Dialog -->
+        <EditComputerDialog v-model:isOpen="showEditDialog" :computer="selectedComputerForEdit" :room-id="room.id" form-id="edit-computer-form" />
+
+        <!-- Delete Computer Dialog -->
+        <DeleteComputerDialog v-model:isOpen="showDeleteDialog" :computer="selectedComputerForDelete" :room-id="room.id" />
     </AppLayout>
 </template>

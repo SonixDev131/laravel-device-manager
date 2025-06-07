@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ComputerDialog from '@/components/rooms/ComputerDialog.vue';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Room } from '@/types';
+import { Computer, Room } from '@/types';
 import { PlusIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import ComputerItem from './ComputerItem.vue';
@@ -17,6 +17,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     toggleSelection: [computerId: string];
+    editComputer: [computer: Computer];
+    deleteComputer: [computer: Computer];
 }>();
 
 /**
@@ -111,7 +113,10 @@ const roomInfo = computed(() => {
                                 :computer="cell.computer"
                                 :isSelected="selectedComputers.includes(cell.computer.id)"
                                 :isSelectable="commandMode === 'selected'"
+                                :canManageComputers="userAccess?.can_manage_computers"
                                 @click="commandMode === 'selected' ? handleToggleSelection(cell.computer.id) : null"
+                                @editComputer="(computer) => emit('editComputer', computer)"
+                                @deleteComputer="(computer) => emit('deleteComputer', computer)"
                             />
 
                             <!-- Improved empty cell with "+" button and additional height for consistency -->

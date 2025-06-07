@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\CreateMetricAction;
+use App\Console\Commands\UpdateComputerTimeoutStatusCommand;
 use App\Services\RabbitMQService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -16,9 +17,9 @@ Artisan::command('inspire', function () {
 /**
  * Define the application's command schedule.
  */
-Schedule::command('computers:check-timeouts')
+Schedule::command(UpdateComputerTimeoutStatusCommand::class, ['--timeout=5'])
     ->everyMinute()
-    ->appendOutputTo(storage_path('logs/scheduled-commands.log'))
+    ->appendOutputTo(storage_path('logs/computer-timeout-updates.log'))
     ->withoutOverlapping();
 
 Artisan::command('rabbit:listen', function (RabbitMQService $rabbitMQService, CreateMetricAction $action) {

@@ -59,6 +59,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/rooms/{room}/blocked-websites', [RoomBlockedWebsitesController::class, 'index'])->name('rooms.blocked-websites.index');
         Route::post('/rooms/{room}/update-agents', [RoomController::class, 'updateAgents'])->name('rooms.update-agents');
         Route::post('/rooms/{room}/computers', [RoomComputerController::class, 'store'])->name('rooms.computers.store');
+        Route::put('/rooms/{room}/computers/{computer}', [RoomComputerController::class, 'update'])->name('rooms.computers.update');
+        Route::delete('/rooms/{room}/computers/{computer}', [RoomComputerController::class, 'destroy'])->name('rooms.computers.destroy');
 
         // Additional room operations
         Route::post('/rooms/{room}/send-command', [RoomController::class, 'sendCommand'])->name('rooms.send-command');

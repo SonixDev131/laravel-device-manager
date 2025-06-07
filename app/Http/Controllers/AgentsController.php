@@ -32,7 +32,9 @@ class AgentsController extends Controller
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get()
-            ->pluck('count', 'status')
+            ->mapWithKeys(function ($item) {
+                return [$item->status->value => $item->count];
+            })
             ->toArray();
 
         // Get total count

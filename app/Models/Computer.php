@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $room_id Foreign key to the room
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon|null $last_heartbeat_at Last time computer sent heartbeat
  * @property-read Room $room The room this computer is located in
  * @property-read Collection<int, Command> $commands Commands assigned to this computer
  * @property-read Collection<int, Metric> $metrics Metrics collected from this computer
@@ -54,6 +55,7 @@ final class Computer extends Model
 
     protected $casts = [
         'last_heartbeat_at' => 'datetime',
+        'status' => ComputerStatus::class,
     ];
 
     /** @return BelongsTo<Room, $this> */
@@ -78,5 +80,76 @@ final class Computer extends Model
     public function latestMetric(): HasOne
     {
         return $this->hasOne(Metric::class)->latest('created_at')->limit(1);
+    }
+
+    /**
+     * Check if computer has timed out based on last heartbeat.
+     *
+     * @param  int  $timeoutMinutes  Number of minutes after which computer is considered timed out
+     */
+    public function hasTimedOut(int $timeoutMinutes = 5): bool
+    {
+        if ($this->last_heartbeat_at === null) {
+            return true;
+        }
+
+        return $this->last_heartbeat_at->diffInMinutes(now()) > $timeoutMinutes;
+    }
+
+    /**
+     * Update computer status based on timeout.
+     *
+     * @param  int  $timeoutMinutes  Number of minutes after which computer is considered timed out
+     * @return bool True if status was changed, false otherwise
+     */
+    public function updateStatusBasedOnTimeout(int $timeoutMinutes = 5): bool
+    {
+        // Don't change maintenance status
+        if ($this->status === ComputerStatus::MAINTENANCE) {
+            return false;
+        }
+
+        $hasTimedOut = $this->hasTimedOut($timeoutMinutes);
+        $oldStatus = $this->status;
+
+        if ($hasTimedOut && $this->status === ComputerStatus::ONLINE) {
+            $this->status = ComputerStatus::OFFLINE;
+            $this->save();
+
+            return true;
+        }
+
+        if (! $hasTimedOut && $this->status === ComputerStatus::OFFLINE) {
+            $this->status = ComputerStatus::ONLINE;
+            $this->save();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update computer from heartbeat.
+     *
+     * @param  string  $status  Status from heartbeat
+     * @return bool True if status was changed, false otherwise
+     */
+    public function updateFromHeartbeat(string $status): bool
+    {
+        $this->last_heartbeat_at = now();
+
+        // Don't change maintenance status
+        if ($this->status === ComputerStatus::MAINTENANCE) {
+            $this->save();
+
+            return false;
+        }
+
+        $oldStatus = $this->status;
+        $this->status = ComputerStatus::from($status);
+        $this->save();
+
+        return $oldStatus !== $this->status;
     }
 }

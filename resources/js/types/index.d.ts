@@ -58,7 +58,7 @@ export interface Computer {
     room_id: string;
     status: ComputerStatus;
     last_heartbeat_at: string;
-    system_metrics?: SystemMetrics;
+    latest_metric?: SystemMetrics;
 }
 
 export interface SystemMetrics {
