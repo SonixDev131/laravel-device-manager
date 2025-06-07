@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Computer } from '@/types';
-import { Edit, MoreVertical, Trash } from 'lucide-vue-next';
+import { Edit, Trash } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 defineEmits<{
@@ -155,27 +154,29 @@ const firewallStatus = computed(() => {
                         <div :class="statusRingClass"></div>
 
                         <!-- Admin action buttons (only visible on hover and with permission) -->
-                        <div v-if="canManageComputers" class="absolute -right-1 -top-1 z-10 opacity-0 transition-opacity group-hover:opacity-100">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" class="h-6 w-6 bg-white p-0 shadow-sm hover:shadow-md">
-                                        <MoreVertical class="h-3 w-3" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem @click="$emit('editComputer', computer)" class="cursor-pointer">
-                                        <Edit class="mr-2 h-4 w-4" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        @click="$emit('deleteComputer', computer)"
-                                        class="cursor-pointer text-red-600 focus:text-red-600"
-                                    >
-                                        <Trash class="mr-2 h-4 w-4" />
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        <div
+                            v-if="canManageComputers"
+                            class="absolute -right-1 -top-1 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                            <!-- Edit Button -->
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="h-6 w-6 bg-white p-0 shadow-sm hover:bg-blue-50 hover:shadow-md"
+                                @click.stop="$emit('editComputer', computer)"
+                            >
+                                <Edit class="h-3 w-3 text-blue-600" />
+                            </Button>
+
+                            <!-- Delete Button -->
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="h-6 w-6 bg-white p-0 shadow-sm hover:bg-red-50 hover:shadow-md"
+                                @click.stop="$emit('deleteComputer', computer)"
+                            >
+                                <Trash class="h-3 w-3 text-red-600" />
+                            </Button>
                         </div>
 
                         <!-- Computer content -->
