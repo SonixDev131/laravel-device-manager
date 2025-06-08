@@ -18,13 +18,12 @@ final class ComputerFactory extends Factory
         return [
             'id' => Str::uuid()->toString(),
             'room_id' => Room::factory(),
-            'name' => $this->faker->word.'-PC-'.$this->faker->numberBetween(1, 100),
+            'hostname' => $this->faker->word.'-PC-'.$this->faker->numberBetween(1, 100),
             'mac_address' => $this->faker->macAddress(),
-            'ip_address' => $this->faker->ipv4(),
-            'pos_row' => $this->faker->numberBetween(1, 10),
-            'pos_col' => $this->faker->numberBetween(1, 10),
+            'pos_row' => $this->faker->numberBetween(1, 5),
+            'pos_col' => $this->faker->numberBetween(1, 5),
             'status' => $isOnline ? ComputerStatus::ONLINE->value : ComputerStatus::OFFLINE->value,
-            'last_seen_at' => $isOnline ? now() : null,
+            'last_heartbeat_at' => $isOnline ? now() : null,
         ];
     }
 }

@@ -15,8 +15,8 @@ final class RoomFactory extends Factory
     {
         return [
             'name' => 'Lab '.$this->faker->unique()->numberBetween(1, 100),
-            'grid_rows' => $this->faker->numberBetween(1, 10),
-            'grid_cols' => $this->faker->numberBetween(1, 10),
+            'grid_rows' => $this->faker->numberBetween(5, 10),
+            'grid_cols' => $this->faker->numberBetween(5, 10),
         ];
     }
 }

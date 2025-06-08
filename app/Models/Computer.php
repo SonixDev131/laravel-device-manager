@@ -82,6 +82,12 @@ final class Computer extends Model
         return $this->hasOne(Metric::class)->latest('created_at')->limit(1);
     }
 
+    /** @return HasMany<Screenshot, $this> */
+    public function screenshots(): HasMany
+    {
+        return $this->hasMany(Screenshot::class);
+    }
+
     /**
      * Check if computer has timed out based on last heartbeat.
      *

@@ -9,7 +9,9 @@ use App\Http\Controllers\RoomCommandController;
 use App\Http\Controllers\RoomCommandHistoryController;
 use App\Http\Controllers\RoomComputerController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomScreenshotController;
 use App\Http\Controllers\TeacherController;
+use App\Models\Room;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -66,6 +68,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/rooms/{room}/send-command', [RoomController::class, 'sendCommand'])->name('rooms.send-command');
         Route::post('/rooms/{room}/screenshot', [RoomController::class, 'takeScreenshot'])->name('rooms.screenshot');
         Route::post('/rooms/{room}/block-websites', [RoomController::class, 'blockWebsites'])->name('rooms.block-websites');
+
+        // Screenshot management
+        Route::get('/rooms/{room}/screenshots', [RoomScreenshotController::class, 'index'])->name('rooms.screenshots.index');
+        Route::get('/rooms/{room}/screenshots/{screenshot}', [RoomScreenshotController::class, 'show'])->name('rooms.screenshots.show');
+        Route::get('/rooms/{room}/screenshots-page', function (Room $room) {
+            return inertia('rooms/Screenshots', [
+                'room' => $room->only(['id', 'name']),
+            ]);
+        })->name('rooms.screenshots.page');
     });
 
     // System-wide agent management (admin only)

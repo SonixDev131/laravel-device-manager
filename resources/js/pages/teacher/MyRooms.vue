@@ -116,6 +116,15 @@
                                     <ShieldExclamationIcon class="mr-2 h-4 w-4" />
                                     Block Sites
                                 </button>
+
+                                <Link
+                                    v-if="userPermissions.can_take_screenshots"
+                                    :href="route('rooms.screenshots.page', room.id)"
+                                    class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
+                                >
+                                    <CameraIcon class="mr-2 h-4 w-4" />
+                                    View Screenshots
+                                </Link>
                             </div>
                         </div>
                     </div>
